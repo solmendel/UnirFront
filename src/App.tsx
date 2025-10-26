@@ -1,4 +1,4 @@
-import { useState } from 'react'; 
+import React, { useState, useEffect } from 'react'; 
 import { LoginPage } from './components/LoginPage';
 import { MessagesPage } from './components/MessagesPage';
 import { HistoryPage } from './components/HistoryPage';
@@ -14,9 +14,66 @@ type Page = 'messages' | 'history' | 'collaborators' | 'metrics';
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('messages');
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState<{ email: string; name: string } | null>(null);
+
+  // Check for existing session on app load
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        const sessionData = localStorage.getItem('unir-session');
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          // Check if session is still valid (not expired)
+          if (session.expiresAt && new Date().getTime() < session.expiresAt) {
+            setIsLoggedIn(true);
+            setUserData(session.user);
+          } else {
+            // Session expired, clear it
+            localStorage.removeItem('unir-session');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        localStorage.removeItem('unir-session');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const handleLogin = (userData?: { email: string; name: string }) => {
+    const sessionData = {
+      isLoggedIn: true,
+      user: userData || { email: 'admin@unir.com', name: 'Admin Usuario' },
+      loginTime: new Date().getTime(),
+      expiresAt: new Date().getTime() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+    
+    localStorage.setItem('unir-session', JSON.stringify(sessionData));
+    setIsLoggedIn(true);
+    setUserData(sessionData.user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('unir-session');
+    setIsLoggedIn(false);
+    setUserData(null);
+  };
+
+  // Show loading state while checking session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   const navigation = [
@@ -99,17 +156,17 @@ export default function App() {
               className="w-10 h-10 rounded-full flex items-center justify-center text-white"
               style={{ backgroundColor: '#ec6c8c' }}
             >
-              A
+              {(userData?.name || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">Admin Usuario</p>
-              <p className="text-xs text-muted-foreground truncate">admin@unir.com</p>
+              <p className="text-sm truncate">{userData?.name || 'Usuario'}</p>
+              <p className="text-xs text-muted-foreground truncate">{userData?.email || 'user@example.com'}</p>
             </div>
           </div>
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 px-4 rounded-xl"
-            onClick={() => setIsLoggedIn(false)}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
             Cerrar sesión

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';

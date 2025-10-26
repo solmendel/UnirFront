@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import React from 'react';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -7,7 +10,7 @@ import { Mail } from 'lucide-react';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (userData?: { email: string; name: string }) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
@@ -16,7 +19,37 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin();
+    // Extract name from email (part before @)
+    const name = email.split('@')[0] || 'Usuario';
+    onLogin({ email, name });
+  };
+
+  const handleGoogleSuccess = (credentialResponse: any) => {
+    try {
+      // Decode the JWT token to get user information
+      const decoded: any = jwtDecode(credentialResponse.credential);
+      
+      // Extract user data from Google response
+      const userData = {
+        email: decoded.email,
+        name: decoded.name || decoded.given_name || decoded.email.split('@')[0]
+      };
+      
+      // Fill in the form fields with Google data
+      setEmail(userData.email);
+      setPassword(''); // Don't fill password for security
+      
+      // Automatically log in with Google data
+      onLogin(userData);
+    } catch (error) {
+      console.error('Error decoding Google credential:', error);
+    }
+  };
+
+  const handleGoogleError = (error: any) => {
+    console.error('Google login failed:', error);
+    // You could add a toast notification here if you have a toast system
+    alert('Error al iniciar sesión con Google. Por favor, verifica que el Client ID esté configurado correctamente.');
   };
 
   return (
@@ -77,15 +110,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-xl h-11"
-            onClick={onLogin}
-          >
-            <Mail className="mr-2 h-4 w-4" />
-            Continuar con Google
-          </Button>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.log('Error al iniciar sesión con Google');
+            }}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            width="100%"
+            locale="es"
+          />
         </CardContent>
       </Card>
     </div>
