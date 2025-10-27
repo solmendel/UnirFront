@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -6,131 +6,11 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
-import { Search, Instagram, Mail, MessageCircle, Send } from 'lucide-react';
+import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
+// import { useMessages } from '../hooks/useMessages'; // Temporalmente deshabilitado
+import { Conversation, ChatMessage } from '../types/api';
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  sender: 'user' | 'me';
-  time: string;
-}
-
-interface Message {
-  id: string;
-  sender: string;
-  preview: string;
-  platform: 'instagram' | 'whatsapp' | 'gmail';
-  time: string;
-  unread: boolean;
-  conversation: ChatMessage[];
-}
-
-const initialMessages: Message[] = [
-  {
-    id: '1',
-    sender: 'María González',
-    preview: 'Hola, tengo una consulta sobre el producto...',
-    platform: 'instagram',
-    time: '10:30',
-    unread: true,
-    conversation: [
-      {
-        id: '1-1',
-        text: 'Hola, tengo una consulta sobre el producto que publicaron ayer. ¿Está disponible en otros colores?',
-        sender: 'user',
-        time: '10:30'
-      }
-    ]
-  },
-  {
-    id: '2',
-    sender: 'Carlos Ruiz',
-    preview: 'Gracias por la información',
-    platform: 'whatsapp',
-    time: '09:45',
-    unread: false,
-    conversation: [
-      {
-        id: '2-1',
-        text: 'Hola, me gustaría información sobre sus servicios',
-        sender: 'user',
-        time: '09:30'
-      },
-      {
-        id: '2-2',
-        text: 'Por supuesto, contamos con diversos planes que se adaptan a tus necesidades.',
-        sender: 'me',
-        time: '09:35'
-      },
-      {
-        id: '2-3',
-        text: 'Gracias por la información. Me gustaría proceder con la compra.',
-        sender: 'user',
-        time: '09:45'
-      }
-    ]
-  },
-  {
-    id: '3',
-    sender: 'Ana Martínez',
-    preview: 'Consulta sobre el pedido #1234',
-    platform: 'gmail',
-    time: 'Ayer',
-    unread: true,
-    conversation: [
-      {
-        id: '3-1',
-        text: 'Buenos días, escribo para consultar sobre el estado de mi pedido #1234. ¿Cuándo llegará?',
-        sender: 'user',
-        time: 'Ayer 15:20'
-      }
-    ]
-  },
-  {
-    id: '4',
-    sender: 'Pedro López',
-    preview: '¿Tienen envío a domicilio?',
-    platform: 'whatsapp',
-    time: 'Ayer',
-    unread: false,
-    conversation: [
-      {
-        id: '4-1',
-        text: '¿Tienen envío a domicilio? ¿Cuál es el costo?',
-        sender: 'user',
-        time: 'Ayer 12:00'
-      },
-      {
-        id: '4-2',
-        text: 'Sí, tenemos envío a domicilio. El costo varía según la zona, entre $50 y $100.',
-        sender: 'me',
-        time: 'Ayer 12:15'
-      }
-    ]
-  },
-  {
-    id: '5',
-    sender: 'Laura Torres',
-    preview: 'Me encanta su contenido',
-    platform: 'instagram',
-    time: '15 Mar',
-    unread: false,
-    conversation: [
-      {
-        id: '5-1',
-        text: 'Me encanta su contenido. ¿Hacen colaboraciones con influencers?',
-        sender: 'user',
-        time: '15 Mar 18:00'
-      },
-      {
-        id: '5-2',
-        text: '¡Gracias! Sí, estamos abiertos a colaboraciones. Te enviaré más información.',
-        sender: 'me',
-        time: '15 Mar 18:30'
-      }
-    ]
-  },
-];
+// Los tipos ya están importados desde '../types/api'
 
 const templates = [
   { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
@@ -139,12 +19,159 @@ const templates = [
   { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
 ];
 
+// Datos de ejemplo para mostrar la interfaz
+const initialConversations: Conversation[] = [
+  {
+    id: '1',
+    participantName: 'María González',
+    participantIdentifier: '+1234567890',
+    platform: 'whatsapp',
+    lastMessage: 'Hola, tengo una consulta sobre el producto...',
+    time: '10:30',
+    unread: true,
+    conversation: [
+      {
+        id: '1-1',
+        text: 'Hola, tengo una consulta sobre el producto que publicaron ayer. ¿Está disponible en otros colores?',
+        sender: 'user',
+        time: '10:30',
+        messageId: 1,
+        isRead: false
+      }
+    ],
+    channelId: 1,
+    externalId: 'wa_1234567890'
+  },
+  {
+    id: '2',
+    participantName: 'Carlos Ruiz',
+    participantIdentifier: '+0987654321',
+    platform: 'whatsapp',
+    lastMessage: 'Gracias por la información',
+    time: '09:45',
+    unread: false,
+    conversation: [
+      {
+        id: '2-1',
+        text: 'Hola, me gustaría información sobre sus servicios',
+        sender: 'user',
+        time: '09:30',
+        messageId: 2,
+        isRead: true
+      },
+      {
+        id: '2-2',
+        text: 'Por supuesto, contamos con diversos planes que se adaptan a tus necesidades.',
+        sender: 'me',
+        time: '09:35',
+        messageId: 3,
+        isRead: true
+      },
+      {
+        id: '2-3',
+        text: 'Gracias por la información. Me gustaría proceder con la compra.',
+        sender: 'user',
+        time: '09:45',
+        messageId: 4,
+        isRead: true
+      }
+    ],
+    channelId: 1,
+    externalId: 'wa_0987654321'
+  },
+  {
+    id: '3',
+    participantName: 'Ana Martínez',
+    participantIdentifier: 'ana.martinez@email.com',
+    platform: 'gmail',
+    lastMessage: 'Consulta sobre el pedido #1234',
+    time: 'Ayer',
+    unread: true,
+    conversation: [
+      {
+        id: '3-1',
+        text: 'Buenos días, escribo para consultar sobre el estado de mi pedido #1234. ¿Cuándo llegará?',
+        sender: 'user',
+        time: 'Ayer 15:20',
+        messageId: 5,
+        isRead: false
+      }
+    ],
+    channelId: 3,
+    externalId: 'gmail_ana_martinez'
+  },
+  {
+    id: '4',
+    participantName: 'Pedro López',
+    participantIdentifier: '+1122334455',
+    platform: 'whatsapp',
+    lastMessage: '¿Tienen envío a domicilio?',
+    time: 'Ayer',
+    unread: false,
+    conversation: [
+      {
+        id: '4-1',
+        text: '¿Tienen envío a domicilio? ¿Cuál es el costo?',
+        sender: 'user',
+        time: 'Ayer 12:00',
+        messageId: 6,
+        isRead: true
+      },
+      {
+        id: '4-2',
+        text: 'Sí, tenemos envío a domicilio. El costo varía según la zona, entre $50 y $100.',
+        sender: 'me',
+        time: 'Ayer 12:15',
+        messageId: 7,
+        isRead: true
+      }
+    ],
+    channelId: 1,
+    externalId: 'wa_1122334455'
+  },
+  {
+    id: '5',
+    participantName: 'Laura Torres',
+    participantIdentifier: '@laura_torres',
+    platform: 'instagram',
+    lastMessage: 'Me encanta su contenido',
+    time: '15 Mar',
+    unread: false,
+    conversation: [
+      {
+        id: '5-1',
+        text: 'Me encanta su contenido. ¿Hacen colaboraciones con influencers?',
+        sender: 'user',
+        time: '15 Mar 18:00',
+        messageId: 8,
+        isRead: true
+      },
+      {
+        id: '5-2',
+        text: '¡Gracias! Sí, estamos abiertos a colaboraciones. Te enviaré más información.',
+        sender: 'me',
+        time: '15 Mar 18:30',
+        messageId: 9,
+        isRead: true
+      }
+    ],
+    channelId: 2,
+    externalId: 'ig_laura_torres'
+  }
+];
+
 export function MessagesPage() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  // Estado para manejar conversaciones (preparado para integrar con backend)
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false); // Cambiará a true cuando se conecte el backend
+
   const [filter, setFilter] = useState<string>('all');
   const [reply, setReply] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const platformIcons = {
     instagram: <Instagram className="h-4 w-4" />,
@@ -158,15 +185,15 @@ export function MessagesPage() {
     gmail: '#ea4335'
   };
 
-  const filteredMessages = messages
-    .filter(msg => filter === 'all' ? true : msg.platform === filter)
-    .filter(msg => {
+  const filteredConversations = conversations
+    .filter(conv => filter === 'all' ? true : conv.platform === filter)
+    .filter(conv => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       return (
-        msg.sender.toLowerCase().includes(query) ||
-        msg.preview.toLowerCase().includes(query) ||
-        msg.conversation.some(chat => chat.text.toLowerCase().includes(query))
+        conv.participantName.toLowerCase().includes(query) ||
+        conv.lastMessage.toLowerCase().includes(query) ||
+        conv.conversation.some(chat => chat.text.toLowerCase().includes(query))
       );
     });
 
@@ -174,45 +201,101 @@ export function MessagesPage() {
     setReply(templateContent);
   };
 
-  const handleSendMessage = () => {
-    if (!reply.trim() || !selectedMessage) return;
+  const handleSendMessage = async () => {
+    if (!reply.trim() || !selectedConversation) return;
 
-    const now = new Date();
-    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    setIsSending(true);
+    try {
+      // Simular envío de mensaje (en modo demo)
+      const now = new Date();
+      const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const newChatMessage: ChatMessage = {
-      id: `${selectedMessage.id}-${selectedMessage.conversation.length + 1}`,
-      text: reply,
-      sender: 'me',
-      time: timeString
-    };
+      const newChatMessage: ChatMessage = {
+        id: `${selectedConversation.id}-${selectedConversation.conversation.length + 1}`,
+        text: reply,
+        sender: 'me',
+        time: timeString,
+        messageId: Date.now(),
+        isRead: true
+      };
 
-    setMessages(prevMessages =>
-      prevMessages.map(msg =>
-        msg.id === selectedMessage.id
-          ? {
-              ...msg,
-              conversation: [...msg.conversation, newChatMessage],
-              preview: reply,
-              time: timeString,
-              unread: false
-            }
-          : msg
-      )
-    );
+      // Actualizar la conversación localmente
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === selectedConversation.id
+            ? {
+                ...conv,
+                conversation: [...conv.conversation, newChatMessage],
+                lastMessage: reply,
+                time: timeString
+              }
+            : conv
+        )
+      );
 
-    // Update selected message
-    if (selectedMessage) {
-      setSelectedMessage({
-        ...selectedMessage,
-        conversation: [...selectedMessage.conversation, newChatMessage],
-        preview: reply,
-        time: timeString
-      });
+      // Actualizar conversación seleccionada
+      setSelectedConversation(prev => 
+        prev ? {
+          ...prev,
+          conversation: [...prev.conversation, newChatMessage],
+          lastMessage: reply,
+          time: timeString
+        } : null
+      );
+
+      setReply('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsSending(false);
     }
-
-    setReply('');
   };
+
+  // Marcar mensajes como leídos cuando se selecciona una conversación
+  useEffect(() => {
+    if (selectedConversation) {
+      // Marcar mensajes no leídos como leídos
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === selectedConversation.id
+            ? {
+                ...conv,
+                conversation: conv.conversation.map(msg => 
+                  msg.sender === 'user' && !msg.isRead 
+                    ? { ...msg, isRead: true }
+                    : msg
+                ),
+                unread: false
+              }
+            : conv
+        )
+      );
+
+      // Actualizar conversación seleccionada
+      setSelectedConversation(prev => 
+        prev ? {
+          ...prev,
+          conversation: prev.conversation.map(msg => 
+            msg.sender === 'user' && !msg.isRead 
+              ? { ...msg, isRead: true }
+              : msg
+          ),
+          unread: false
+        } : null
+      );
+    }
+  }, [selectedConversation]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Cargando conversaciones...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
@@ -223,6 +306,12 @@ export function MessagesPage() {
             <p className="text-sm text-muted-foreground mt-1">
               Gestiona todos tus mensajes en un solo lugar
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-orange-500'}`} />
+              <span className="text-xs text-muted-foreground">
+                {isConnected ? 'Conectado al backend' : 'Modo demo - Backend no configurado'}
+              </span>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
@@ -262,6 +351,7 @@ export function MessagesPage() {
             </Button>
           </div>
         </div>
+        
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
@@ -281,51 +371,80 @@ export function MessagesPage() {
           
           <ScrollArea className="flex-1">
             <div className="p-2 pb-6">
-              {filteredMessages.map((message) => (
-                <button
-                  key={message.id}
-                  onClick={() => setSelectedMessage(message)}
-                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
-                    selectedMessage?.id === message.id
-                      ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
-                      : 'hover:bg-white/80'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span>{message.sender}</span>
-                      {message.unread && (
-                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
-                      )}
+              {error && (
+                <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-red-700">{error}</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-blue-700">
+                    Modo demo activo - Los datos son de ejemplo. Configura el backend para conectar con WhatsApp real.
+                  </span>
+                </div>
+              </div>
+              
+              {filteredConversations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No hay conversaciones que coincidan con el filtro</p>
+                  <p className="text-sm mt-2">Prueba cambiar el filtro o la búsqueda</p>
+                </div>
+              ) : (
+                filteredConversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => setSelectedConversation(conversation)}
+                    className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
+                      selectedConversation?.id === conversation.id
+                        ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
+                        : 'hover:bg-white/80'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{conversation.participantName}</span>
+                        {conversation.unread && (
+                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{conversation.time}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{message.time}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                    {message.preview}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[message.platform] }}>
-                    {platformIcons[message.platform]}
-                    <span className="capitalize">{message.platform}</span>
-                  </div>
-                </button>
-              ))}
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                      {conversation.lastMessage}
+                    </p>
+                    <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
+                      {platformIcons[conversation.platform]}
+                      <span className="capitalize">{conversation.platform}</span>
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
           </ScrollArea>
         </div>
 
         {/* Vista de conversación */}
         <div className="flex-1 flex flex-col min-w-0">
-          {selectedMessage ? (
+          {selectedConversation ? (
             <>
               <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3>{selectedMessage.sender}</h3>
+                    <h3>{selectedConversation.participantName}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedMessage.platform], color: platformColors[selectedMessage.platform] }}>
-                        {platformIcons[selectedMessage.platform]}
-                        <span className="ml-1 capitalize">{selectedMessage.platform}</span>
+                      <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
+                        {platformIcons[selectedConversation.platform]}
+                        <span className="ml-1 capitalize">{selectedConversation.platform}</span>
                       </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {selectedConversation.participantIdentifier}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -333,16 +452,21 @@ export function MessagesPage() {
 
               <ScrollArea className="flex-1 p-6">
                 <div className="space-y-4 max-w-3xl pb-6">
-                  {selectedMessage.conversation.map((chat) => (
+                  {selectedConversation.conversation.map((chat) => (
                     <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''}`} style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}>
-                        {chat.sender === 'me' ? 'Yo' : selectedMessage.sender.charAt(0)}
+                        {chat.sender === 'me' ? 'Yo' : selectedConversation.participantName.charAt(0)}
                       </div>
                       <div className="flex-1 max-w-lg">
                         <div className={`rounded-2xl p-4 shadow-sm ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm' : 'bg-white rounded-tl-sm'}`}>
                           <p>{chat.text}</p>
                         </div>
-                        <span className="text-xs text-muted-foreground mt-1 ml-1">{chat.time}</span>
+                        <div className="flex items-center gap-2 mt-1 ml-1">
+                          <span className="text-xs text-muted-foreground">{chat.time}</span>
+                          {!chat.isRead && chat.sender === 'user' && (
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -382,14 +506,19 @@ export function MessagesPage() {
                           handleSendMessage();
                         }
                       }}
+                      disabled={isSending}
                     />
                     <Button 
                       className="rounded-xl h-auto" 
                       style={{ backgroundColor: '#acce60' }}
                       onClick={handleSendMessage}
-                      disabled={!reply.trim()}
+                      disabled={!reply.trim() || isSending}
                     >
-                      <Send className="h-4 w-4" />
+                      {isSending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -399,7 +528,8 @@ export function MessagesPage() {
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                <p>Selecciona un mensaje para ver la conversación</p>
+                <p>Selecciona una conversación para ver los mensajes</p>
+                <p className="text-sm mt-2">Puedes responder usando las plantillas o escribiendo tu propio mensaje</p>
               </div>
             </div>
           )}

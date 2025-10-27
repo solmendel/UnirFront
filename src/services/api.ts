@@ -1,0 +1,258 @@
+import {
+  MessageResponse,
+  MessageCreate,
+  ConversationResponse,
+  ConversationCreate,
+  ChannelResponse,
+  SendMessageRequest,
+  SendMessageResponse,
+  UnifiedMessage,
+  Conversation,
+  ChatMessage
+} from '../types/api';
+import { API_CONFIG } from '../config/api';
+
+class ApiService {
+  private baseUrl: string;
+
+  constructor() {
+    this.baseUrl = API_CONFIG.baseUrl;
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    return response.json();
+  }
+
+  // Endpoints de mensajes
+  async getMessages(params?: {
+    conversation_id?: number;
+    channel?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MessageResponse[]> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.conversation_id !== undefined) {
+      searchParams.append('conversation_id', params.conversation_id.toString());
+    }
+    if (params?.channel) {
+      searchParams.append('channel', params.channel);
+    }
+    if (params?.limit !== undefined) {
+      searchParams.append('limit', params.limit.toString());
+    }
+    if (params?.offset !== undefined) {
+      searchParams.append('offset', params.offset.toString());
+    }
+
+    const queryString = searchParams.toString();
+    const endpoint = `/api/v1/messages${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<MessageResponse[]>(endpoint);
+  }
+
+  async getMessage(messageId: number): Promise<MessageResponse> {
+    return this.request<MessageResponse>(`/api/v1/messages/${messageId}`);
+  }
+
+  async createMessage(message: MessageCreate): Promise<MessageResponse> {
+    return this.request<MessageResponse>('/api/v1/messages', {
+      method: 'POST',
+      body: JSON.stringify(message),
+    });
+  }
+
+  async markMessageAsRead(messageId: number): Promise<void> {
+    return this.request<void>(`/api/v1/messages/${messageId}/read`, {
+      method: 'PUT',
+    });
+  }
+
+  async getUnreadCount(conversationId?: number): Promise<{ count: number }> {
+    const endpoint = conversationId 
+      ? `/api/v1/messages/unread/count?conversation_id=${conversationId}`
+      : '/api/v1/messages/unread/count';
+    
+    return this.request<{ count: number }>(endpoint);
+  }
+
+  async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
+    return this.request<SendMessageResponse>('/api/v1/send', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Endpoints de conversaciones
+  async getConversations(params?: {
+    channel_id?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<ConversationResponse[]> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.channel_id !== undefined) {
+      searchParams.append('channel_id', params.channel_id.toString());
+    }
+    if (params?.limit !== undefined) {
+      searchParams.append('limit', params.limit.toString());
+    }
+    if (params?.offset !== undefined) {
+      searchParams.append('offset', params.offset.toString());
+    }
+
+    const queryString = searchParams.toString();
+    const endpoint = `/api/v1/conversations${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<ConversationResponse[]>(endpoint);
+  }
+
+  async getConversation(conversationId: number, limit?: number): Promise<ConversationResponse> {
+    const searchParams = new URLSearchParams();
+    if (limit !== undefined) {
+      searchParams.append('limit', limit.toString());
+    }
+
+    const queryString = searchParams.toString();
+    const endpoint = `/api/v1/conversations/${conversationId}${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<ConversationResponse>(endpoint);
+  }
+
+  async createConversation(conversation: ConversationCreate): Promise<ConversationResponse> {
+    return this.request<ConversationResponse>('/api/v1/conversations', {
+      method: 'POST',
+      body: JSON.stringify(conversation),
+    });
+  }
+
+  async updateParticipantName(conversationId: number, participantName: string): Promise<void> {
+    return this.request<void>(`/api/v1/conversations/${conversationId}/participant?participant_name=${encodeURIComponent(participantName)}`, {
+      method: 'PUT',
+    });
+  }
+
+  async deactivateConversation(conversationId: number): Promise<void> {
+    return this.request<void>(`/api/v1/conversations/${conversationId}/deactivate`, {
+      method: 'PUT',
+    });
+  }
+
+  // Endpoints de canales
+  async getChannels(): Promise<ChannelResponse[]> {
+    return this.request<ChannelResponse[]>('/api/v1/channels');
+  }
+
+  async getChannel(channelName: string): Promise<ChannelResponse> {
+    return this.request<ChannelResponse>(`/api/v1/channels/${channelName}`);
+  }
+
+  async getChannelStats(channelName: string): Promise<any> {
+    return this.request<any>(`/api/v1/channels/${channelName}/stats`);
+  }
+
+  // Endpoint para recibir mensajes unificados
+  async receiveUnifiedMessage(message: UnifiedMessage): Promise<void> {
+    return this.request<void>('/api/v1/messages/unified', {
+      method: 'POST',
+      body: JSON.stringify(message),
+    });
+  }
+
+  // Health check
+  async healthCheck(): Promise<any> {
+    return this.request<any>('/health');
+  }
+
+  // Broadcast (para WebSocket)
+  async broadcast(message: string): Promise<void> {
+    return this.request<void>(`/broadcast?message=${encodeURIComponent(message)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Métodos de utilidad para convertir datos
+  convertToConversation(conversationResponse: ConversationResponse): Conversation {
+    const platform = this.getPlatformFromChannelId(conversationResponse.channel_id);
+    
+    const chatMessages: ChatMessage[] = conversationResponse.messages.map(msg => ({
+      id: msg.id.toString(),
+      text: msg.content,
+      sender: msg.direction === 'inbound' ? 'user' : 'me',
+      time: this.formatTime(new Date(msg.timestamp)),
+      messageId: msg.id,
+      isRead: msg.is_read
+    }));
+
+    const lastMessage = conversationResponse.messages[conversationResponse.messages.length - 1];
+    const unreadCount = conversationResponse.messages.filter(msg => !msg.is_read && msg.direction === 'inbound').length;
+
+    return {
+      id: conversationResponse.id.toString(),
+      participantName: conversationResponse.participant_name || 'Usuario',
+      participantIdentifier: conversationResponse.participant_identifier,
+      platform,
+      lastMessage: lastMessage?.content || 'Sin mensajes',
+      time: lastMessage ? this.formatTime(new Date(lastMessage.timestamp)) : 'N/A',
+      unread: unreadCount > 0,
+      conversation: chatMessages,
+      channelId: conversationResponse.channel_id,
+      externalId: conversationResponse.external_id
+    };
+  }
+
+  private getPlatformFromChannelId(channelId: number): 'whatsapp' | 'instagram' | 'gmail' {
+    // Mapear channel_id a plataforma - ajustar según tu configuración
+    switch (channelId) {
+      case 1: return 'whatsapp';
+      case 2: return 'instagram';
+      case 3: return 'gmail';
+      default: return 'whatsapp';
+    }
+  }
+
+  private formatTime(date: Date): string {
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } else if (diffInHours < 48) {
+      return 'Ayer';
+    } else {
+      return date.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: 'short' 
+      });
+    }
+  }
+}
+
+export const apiService = new ApiService();
