@@ -7,10 +7,8 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
-// import { useMessages } from '../hooks/useMessages'; // Temporalmente deshabilitado
+import { useMessages } from '../hooks/useMessages';
 import { Conversation, ChatMessage } from '../types/api';
-
-// Los tipos ya están importados desde '../types/api'
 
 const templates = [
   { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
@@ -19,154 +17,22 @@ const templates = [
   { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
 ];
 
-// Datos de ejemplo para mostrar la interfaz
-const initialConversations: Conversation[] = [
-  {
-    id: '1',
-    participantName: 'María González',
-    participantIdentifier: '+1234567890',
-    platform: 'whatsapp',
-    lastMessage: 'Hola, tengo una consulta sobre el producto...',
-    time: '10:30',
-    unread: true,
-    conversation: [
-      {
-        id: '1-1',
-        text: 'Hola, tengo una consulta sobre el producto que publicaron ayer. ¿Está disponible en otros colores?',
-        sender: 'user',
-        time: '10:30',
-        messageId: 1,
-        isRead: false
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_1234567890'
-  },
-  {
-    id: '2',
-    participantName: 'Carlos Ruiz',
-    participantIdentifier: '+0987654321',
-    platform: 'whatsapp',
-    lastMessage: 'Gracias por la información',
-    time: '09:45',
-    unread: false,
-    conversation: [
-      {
-        id: '2-1',
-        text: 'Hola, me gustaría información sobre sus servicios',
-        sender: 'user',
-        time: '09:30',
-        messageId: 2,
-        isRead: true
-      },
-      {
-        id: '2-2',
-        text: 'Por supuesto, contamos con diversos planes que se adaptan a tus necesidades.',
-        sender: 'me',
-        time: '09:35',
-        messageId: 3,
-        isRead: true
-      },
-      {
-        id: '2-3',
-        text: 'Gracias por la información. Me gustaría proceder con la compra.',
-        sender: 'user',
-        time: '09:45',
-        messageId: 4,
-        isRead: true
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_0987654321'
-  },
-  {
-    id: '3',
-    participantName: 'Ana Martínez',
-    participantIdentifier: 'ana.martinez@email.com',
-    platform: 'gmail',
-    lastMessage: 'Consulta sobre el pedido #1234',
-    time: 'Ayer',
-    unread: true,
-    conversation: [
-      {
-        id: '3-1',
-        text: 'Buenos días, escribo para consultar sobre el estado de mi pedido #1234. ¿Cuándo llegará?',
-        sender: 'user',
-        time: 'Ayer 15:20',
-        messageId: 5,
-        isRead: false
-      }
-    ],
-    channelId: 3,
-    externalId: 'gmail_ana_martinez'
-  },
-  {
-    id: '4',
-    participantName: 'Pedro López',
-    participantIdentifier: '+1122334455',
-    platform: 'whatsapp',
-    lastMessage: '¿Tienen envío a domicilio?',
-    time: 'Ayer',
-    unread: false,
-    conversation: [
-      {
-        id: '4-1',
-        text: '¿Tienen envío a domicilio? ¿Cuál es el costo?',
-        sender: 'user',
-        time: 'Ayer 12:00',
-        messageId: 6,
-        isRead: true
-      },
-      {
-        id: '4-2',
-        text: 'Sí, tenemos envío a domicilio. El costo varía según la zona, entre $50 y $100.',
-        sender: 'me',
-        time: 'Ayer 12:15',
-        messageId: 7,
-        isRead: true
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_1122334455'
-  },
-  {
-    id: '5',
-    participantName: 'Laura Torres',
-    participantIdentifier: '@laura_torres',
-    platform: 'instagram',
-    lastMessage: 'Me encanta su contenido',
-    time: '15 Mar',
-    unread: false,
-    conversation: [
-      {
-        id: '5-1',
-        text: 'Me encanta su contenido. ¿Hacen colaboraciones con influencers?',
-        sender: 'user',
-        time: '15 Mar 18:00',
-        messageId: 8,
-        isRead: true
-      },
-      {
-        id: '5-2',
-        text: '¡Gracias! Sí, estamos abiertos a colaboraciones. Te enviaré más información.',
-        sender: 'me',
-        time: '15 Mar 18:30',
-        messageId: 9,
-        isRead: true
-      }
-    ],
-    channelId: 2,
-    externalId: 'ig_laura_torres'
-  }
-];
+// No mock data - all data comes from the backend API
 
 export function MessagesPage() {
-  // Estado para manejar conversaciones (preparado para integrar con backend)
-  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false); // Cambiará a true cuando se conecte el backend
+  // Use the useMessages hook to get data from the API
+  const {
+    conversations,
+    selectedConversation,
+    setSelectedConversation,
+    isLoading,
+    error,
+    loadConversations,
+    loadConversation,
+    sendMessage,
+    markMessageAsRead,
+    isConnected
+  } = useMessages();
 
   const [filter, setFilter] = useState<string>('all');
   const [reply, setReply] = useState('');
@@ -206,43 +72,7 @@ export function MessagesPage() {
 
     setIsSending(true);
     try {
-      // Simular envío de mensaje (en modo demo)
-      const now = new Date();
-      const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-      const newChatMessage: ChatMessage = {
-        id: `${selectedConversation.id}-${selectedConversation.conversation.length + 1}`,
-        text: reply,
-        sender: 'me',
-        time: timeString,
-        messageId: Date.now(),
-        isRead: true
-      };
-
-      // Actualizar la conversación localmente
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                conversation: [...conv.conversation, newChatMessage],
-                lastMessage: reply,
-                time: timeString
-              }
-            : conv
-        )
-      );
-
-      // Actualizar conversación seleccionada
-      setSelectedConversation(prev => 
-        prev ? {
-          ...prev,
-          conversation: [...prev.conversation, newChatMessage],
-          lastMessage: reply,
-          time: timeString
-        } : null
-      );
-
+      await sendMessage(selectedConversation.id, reply);
       setReply('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -251,40 +81,20 @@ export function MessagesPage() {
     }
   };
 
-  // Marcar mensajes como leídos cuando se selecciona una conversación
+  // Mark messages as read when conversation is selected
   useEffect(() => {
-    if (selectedConversation) {
-      // Marcar mensajes no leídos como leídos
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                conversation: conv.conversation.map(msg => 
-                  msg.sender === 'user' && !msg.isRead 
-                    ? { ...msg, isRead: true }
-                    : msg
-                ),
-                unread: false
-              }
-            : conv
-        )
-      );
-
-      // Actualizar conversación seleccionada
-      setSelectedConversation(prev => 
-        prev ? {
-          ...prev,
-          conversation: prev.conversation.map(msg => 
-            msg.sender === 'user' && !msg.isRead 
-              ? { ...msg, isRead: true }
-              : msg
-          ),
-          unread: false
-        } : null
-      );
+    if (selectedConversation && selectedConversation.conversation.length > 0) {
+      const unreadMessages = selectedConversation.conversation
+        .filter(msg => msg.sender === 'user' && !msg.isRead);
+      
+      // Mark all unread messages as read
+      unreadMessages.forEach(msg => {
+        if (msg.messageId) {
+          markMessageAsRead(msg.messageId);
+        }
+      });
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, markMessageAsRead]);
 
   if (isLoading) {
     return (

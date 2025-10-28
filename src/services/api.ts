@@ -201,10 +201,13 @@ class ApiService {
   }
 
   // Métodos de utilidad para convertir datos
-  convertToConversation(conversationResponse: ConversationResponse): Conversation {
+  convertToConversation(conversationResponse: any): Conversation {
     const platform = this.getPlatformFromChannelId(conversationResponse.channel_id);
     
-    const chatMessages: ChatMessage[] = conversationResponse.messages.map(msg => ({
+    // Handle case where messages might not be included (when fetching list of conversations)
+    const messages = conversationResponse.messages || [];
+    
+    const chatMessages: ChatMessage[] = messages.map(msg => ({
       id: msg.id.toString(),
       text: msg.content,
       sender: msg.direction === 'incoming' ? 'user' : 'me',
@@ -213,17 +216,30 @@ class ApiService {
       isRead: msg.is_read
     }));
 
-    const lastMessage = conversationResponse.messages[conversationResponse.messages.length - 1];
-    const unreadCount = conversationResponse.messages.filter(msg => !msg.is_read && msg.direction === 'incoming').length;
+    // Check if we have last_message from the enriched response
+    let lastMessage = null;
+    let lastMessageTime = 'N/A';
+    
+    if (conversationResponse.last_message) {
+      lastMessage = conversationResponse.last_message.content;
+      lastMessageTime = this.formatTime(new Date(conversationResponse.last_message.timestamp));
+    } else if (messages.length > 0) {
+      lastMessage = messages[messages.length - 1].content;
+      lastMessageTime = this.formatTime(new Date(messages[messages.length - 1].timestamp));
+    }
+
+    // Check has_unread field or count unread messages
+    const hasUnread = conversationResponse.has_unread || 
+                     messages.some(msg => !msg.is_read && msg.direction === 'incoming');
 
     return {
       id: conversationResponse.id.toString(),
       participantName: conversationResponse.participant_name || 'Usuario',
       participantIdentifier: conversationResponse.participant_identifier,
       platform,
-      lastMessage: lastMessage?.content || 'Sin mensajes',
-      time: lastMessage ? this.formatTime(new Date(lastMessage.timestamp)) : 'N/A',
-      unread: unreadCount > 0,
+      lastMessage: lastMessage || 'Sin mensajes',
+      time: lastMessageTime,
+      unread: hasUnread,
       conversation: chatMessages,
       channelId: conversationResponse.channel_id,
       externalId: conversationResponse.external_id

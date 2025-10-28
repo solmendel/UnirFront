@@ -36,7 +36,7 @@ export interface ConversationResponse {
   external_id: string;
   created_at: string;
   updated_at: string;
-  messages: MessageResponse[];
+  messages?: MessageResponse[]; // Optional - included when fetching a single conversation
 }
 
 export interface ConversationCreate {

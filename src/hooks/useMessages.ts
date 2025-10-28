@@ -211,67 +211,24 @@ export function useMessages() {
     }
   }, [selectedConversation]);
 
-  // Configurar WebSocket
+  // Configurar WebSocket (only on mount/unmount, not when state changes)
   useEffect(() => {
     const callbacks = {
       onNewMessage: (message: MessageResponse) => {
         console.log('New message received:', message);
         
-        // Buscar la conversación correspondiente
-        const conversationId = message.conversation_id.toString();
-        const existingConv = conversations.find(c => c.id === conversationId);
-        
-        if (existingConv) {
-          // Actualizar conversación existente
-          const chatMessage: ChatMessage = {
-            id: message.id.toString(),
-            text: message.content,
-            sender: message.direction === 'incoming' ? 'user' : 'me',
-            time: apiService['formatTime'](new Date(message.timestamp)),
-            messageId: message.id,
-            isRead: message.is_read
-          };
-
-          setConversations(prev => 
-            prev.map(conv => 
-              conv.id === conversationId 
-                ? {
-                    ...conv,
-                    conversation: [...conv.conversation, chatMessage],
-                    lastMessage: message.content,
-                    time: chatMessage.time,
-                    unread: message.direction === 'incoming' ? true : conv.unread
-                  }
-                : conv
-            )
-          );
-
-          // Actualizar conversación seleccionada si es la misma
-          if (selectedConversation?.id === conversationId) {
-            setSelectedConversation(prev => 
-              prev ? {
-                ...prev,
-                conversation: [...prev.conversation, chatMessage],
-                lastMessage: message.content,
-                time: chatMessage.time
-              } : null
-            );
-          }
-        } else {
-          // Recargar conversaciones si es una nueva conversación
-          loadConversations();
-        }
+        // Recargar conversaciones para obtener el estado más actualizado
+        loadConversations();
       },
       
       onMessageRead: (messageId: number) => {
-        markMessageAsRead(messageId);
+        // Recargar conversaciones cuando un mensaje se marca como leído
+        loadConversations();
       },
       
       onConversationUpdated: (conversation: ConversationResponse) => {
-        const convertedConversation = apiService.convertToConversation(conversation);
-        setConversations(prev => 
-          prev.map(conv => conv.id === convertedConversation.id ? convertedConversation : conv)
-        );
+        // Recargar conversaciones cuando se actualiza
+        loadConversations();
       },
       
       onConnect: () => {
@@ -297,12 +254,23 @@ export function useMessages() {
     return () => {
       wsService.disconnect();
     };
-  }, [conversations, selectedConversation, loadConversations, markMessageAsRead]);
+  }, []); // Empty dependencies - only run on mount/unmount
 
   // Cargar conversaciones al montar el componente
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  // Cargar mensajes completos cuando se selecciona una conversación
+  useEffect(() => {
+    if (selectedConversation && selectedConversation.conversation.length === 0) {
+      // Solo cargar si no tenemos mensajes todavía
+      const convId = parseInt(selectedConversation.id);
+      if (!isNaN(convId)) {
+        loadConversation(convId);
+      }
+    }
+  }, [selectedConversation?.id, loadConversation]);
 
   return {
     conversations,

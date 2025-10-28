@@ -1,9 +1,10 @@
 const express = require('express');
-const expressWs = require('express-ws');
 const cors = require('cors');
-
 const app = express();
-expressWs(app);
+
+// Initialize express-ws for the app
+const expressWs = require('express-ws')(app);
+const wss = expressWs.getWss();
 
 // Middleware
 app.use(cors());
@@ -28,68 +29,187 @@ const mockChannels = [
 const mockConversations = [
   {
     id: 1,
-    participant_name: 'John Doe',
-    participant_identifier: '34612345678',
+    participant_name: 'María González',
+    participant_identifier: '+1234567890',
     is_active: true,
     channel_id: 1,
-    external_id: 'whatsapp_34612345678',
+    external_id: 'whatsapp_+1234567890',
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date().toISOString()
   },
   {
     id: 2,
-    participant_name: 'Jane Smith',
-    participant_identifier: 'jane.smith@example.com',
+    participant_name: 'Carlos Ruiz',
+    participant_identifier: '+0987654321',
+    is_active: true,
+    channel_id: 1,
+    external_id: 'whatsapp_+0987654321',
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date(Date.now() - 1800000).toISOString()
+  },
+  {
+    id: 3,
+    participant_name: 'Ana Martínez',
+    participant_identifier: 'ana.martinez@email.com',
     is_active: true,
     channel_id: 3,
-    external_id: 'gmail_jane.smith@example.com',
+    external_id: 'gmail_ana.martinez@email.com',
     created_at: new Date(Date.now() - 172800000).toISOString(),
-    updated_at: new Date(Date.now() - 3600000).toISOString()
+    updated_at: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 4,
+    participant_name: 'Pedro López',
+    participant_identifier: '+1122334455',
+    is_active: true,
+    channel_id: 1,
+    external_id: 'whatsapp_+1122334455',
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 5,
+    participant_name: 'Laura Torres',
+    participant_identifier: '@laura_torres',
+    is_active: true,
+    channel_id: 2,
+    external_id: 'instagram_@laura_torres',
+    created_at: new Date(Date.now() - 432000000).toISOString(),
+    updated_at: new Date(Date.now() - 259200000).toISOString()
   }
 ];
 
 const mockMessages = [
+  // Conversation 1 - María González (WhatsApp)
   {
     id: 1,
-    content: 'Hello! How can I help you?',
+    content: 'Hola, tengo una consulta sobre el producto que publicaron ayer. ¿Está disponible en otros colores?',
     message_type: 'text',
-    direction: 'outgoing',  // Changed from 'outbound'
-    sender_name: null,
-    sender_identifier: 'system',
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    direction: 'incoming',
+    sender_name: 'María González',
+    sender_identifier: '+1234567890',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
     message_metadata: null,
     conversation_id: 1,
-    external_message_id: 'msg_1',
+    external_message_id: 'wa_msg_1',
+    is_read: false,
+    created_at: new Date(Date.now() - 3600000).toISOString()
+  },
+  // Conversation 2 - Carlos Ruiz (WhatsApp)
+  {
+    id: 2,
+    content: 'Hola, me gustaría información sobre sus servicios',
+    message_type: 'text',
+    direction: 'incoming',
+    sender_name: 'Carlos Ruiz',
+    sender_identifier: '+0987654321',
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    message_metadata: null,
+    conversation_id: 2,
+    external_message_id: 'wa_msg_2',
     is_read: true,
     created_at: new Date(Date.now() - 7200000).toISOString()
   },
   {
-    id: 2,
-    content: 'Hi! I need help with my account.',
-    message_type: 'text',
-    direction: 'incoming',  // Changed from 'inbound'
-    sender_name: 'John Doe',
-    sender_identifier: '34612345678',
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    message_metadata: null,
-    conversation_id: 1,
-    external_message_id: 'msg_2',
-    is_read: false,
-    created_at: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
     id: 3,
-    content: 'Of course! What seems to be the issue?',
+    content: 'Por supuesto, contamos con diversos planes que se adaptan a tus necesidades.',
     message_type: 'text',
-    direction: 'outgoing',  // Changed from 'outbound'
+    direction: 'outgoing',
     sender_name: null,
     sender_identifier: 'system',
-    timestamp: new Date(Date.now() - 1800000).toISOString(),
+    timestamp: new Date(Date.now() - 5400000).toISOString(),
     message_metadata: null,
-    conversation_id: 1,
-    external_message_id: 'msg_3',
+    conversation_id: 2,
+    external_message_id: 'wa_msg_3',
     is_read: true,
-    created_at: new Date(Date.now() - 1800000).toISOString()
+    created_at: new Date(Date.now() - 5400000).toISOString()
+  },
+  {
+    id: 4,
+    content: 'Gracias por la información. Me gustaría proceder con la compra.',
+    message_type: 'text',
+    direction: 'incoming',
+    sender_name: 'Carlos Ruiz',
+    sender_identifier: '+0987654321',
+    timestamp: new Date(Date.now() - 2700000).toISOString(),
+    message_metadata: null,
+    conversation_id: 2,
+    external_message_id: 'wa_msg_4',
+    is_read: true,
+    created_at: new Date(Date.now() - 2700000).toISOString()
+  },
+  // Conversation 3 - Ana Martínez (Gmail)
+  {
+    id: 5,
+    content: 'Buenos días, escribo para consultar sobre el estado de mi pedido #1233. ¿Cuándo llegará?',
+    message_type: 'text',
+    direction: 'incoming',
+    sender_name: 'Ana Martínez',
+    sender_identifier: 'ana.martinez@email.com',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    message_metadata: null,
+    conversation_id: 3,
+    external_message_id: 'gmail_msg_1',
+    is_read: false,
+    created_at: new Date(Date.now() - 86400000).toISOString()
+  },
+  // Conversation 4 - Pedro López (WhatsApp)
+  {
+    id: 6,
+    content: '¿Tienen envío a domicilio? ¿Cuál es el costo?',
+    message_type: 'text',
+    direction: 'incoming',
+    sender_name: 'Pedro López',
+    sender_identifier: '+1122334455',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    message_metadata: null,
+    conversation_id: 4,
+    external_message_id: 'wa_msg_5',
+    is_read: true,
+    created_at: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 7,
+    content: 'Sí, tenemos envío a domicilio. El costo varía según la zona, entre $50 y $100.',
+    message_type: 'text',
+    direction: 'outgoing',
+    sender_name: null,
+    sender_identifier: 'system',
+    timestamp: new Date(Date.now() - 81000000).toISOString(),
+    message_metadata: null,
+    conversation_id: 4,
+    external_message_id: 'wa_msg_6',
+    is_read: true,
+    created_at: new Date(Date.now() - 81000000).toISOString()
+  },
+  // Conversation 5 - Laura Torres (Instagram)
+  {
+    id: 8,
+    content: 'Me encanta su contenido. ¿Hacen colaboraciones con influencers?',
+    message_type: 'text',
+    direction: 'incoming',
+    sender_name: 'Laura Torres',
+    sender_identifier: '@laura_torres',
+    timestamp: new Date(Date.now() - 259200000).toISOString(),
+    message_metadata: null,
+    conversation_id: 5,
+    external_message_id: 'ig_msg_1',
+    is_read: true,
+    created_at: new Date(Date.now() - 259200000).toISOString()
+  },
+  {
+    id: 9,
+    content: '¡Gracias! Sí, estamos abiertos a colaboraciones. Te enviaré más información.',
+    message_type: 'text',
+    direction: 'outgoing',
+    sender_name: null,
+    sender_identifier: 'system',
+    timestamp: new Date(Date.now() - 256000000).toISOString(),
+    message_metadata: null,
+    conversation_id: 5,
+    external_message_id: 'ig_msg_2',
+    is_read: true,
+    created_at: new Date(Date.now() - 256000000).toISOString()
   }
 ];
 
@@ -377,10 +497,33 @@ app.get('/api/v1/conversations', (req, res) => {
   // Sort by updated_at descending (most recent first)
   filteredConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
+  // Enrich with last message info for display
+  const enrichedConversations = filteredConversations.map(conv => {
+    const conversationMessages = messages.filter(m => m.conversation_id === conv.id);
+    if (conversationMessages.length > 0) {
+      // Sort by timestamp descending to get the most recent
+      conversationMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const lastMessage = conversationMessages[0];
+      const hasUnread = conversationMessages.some(m => !m.is_read && m.direction === 'incoming');
+      
+      return {
+        ...conv,
+        last_message: {
+          content: lastMessage.content,
+          timestamp: lastMessage.timestamp,
+          direction: lastMessage.direction,
+          is_read: lastMessage.is_read
+        },
+        has_unread: hasUnread
+      };
+    }
+    return conv;
+  });
+
   // Pagination with validation
   const limit = Math.min(parseInt(req.query.limit) || 50, 100);
   const offset = Math.max(parseInt(req.query.offset) || 0, 0);
-  const paginated = filteredConversations.slice(offset, offset + limit);
+  const paginated = enrichedConversations.slice(offset, offset + limit);
 
   res.json(paginated);
 });
@@ -538,7 +681,7 @@ app.ws('/ws', (ws, req) => {
 
 const PORT = process.env.PORT || 8000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🚀 UNIR Mock Backend Server running on http://localhost:${PORT}`);
   console.log(`📡 WebSocket endpoint: ws://localhost:${PORT}/ws`);
   console.log(`\n📋 Available endpoints:`);
@@ -562,3 +705,4 @@ app.listen(PORT, () => {
   console.log(`   POST /broadcast`);
   console.log(`\n💡 Use WebSocket at ws://localhost:${PORT}/ws\n`);
 });
+
