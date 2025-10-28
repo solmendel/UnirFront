@@ -76,39 +76,44 @@ export function useMessages() {
       try {
         const newMessage = await apiService.createMessage(messageData);
         
-        // Actualizar la conversación localmente
-        const chatMessage: ChatMessage = {
-          id: newMessage.id.toString(),
-          text: newMessage.content,
-          sender: 'me',
-          time: apiService['formatTime'](new Date(newMessage.timestamp)),
-          messageId: newMessage.id,
-          isRead: true
-        };
+        // Only update local state if WebSocket is not connected
+        // If WebSocket is connected, the broadcast will handle the update
+        if (!wsService.isConnected()) {
+          const chatMessage: ChatMessage = {
+            id: newMessage.id.toString(),
+            text: newMessage.content,
+            sender: 'me',
+            time: apiService['formatTime'](new Date(newMessage.timestamp)),
+            messageId: newMessage.id,
+            isRead: true
+          };
 
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === conversationId 
-              ? {
-                  ...conv,
-                  conversation: [...conv.conversation, chatMessage],
-                  lastMessage: content,
-                  time: chatMessage.time
-                }
-              : conv
-          )
-        );
-
-        if (selectedConversation?.id === conversationId) {
-          setSelectedConversation(prev => 
-            prev ? {
-              ...prev,
-              conversation: [...prev.conversation, chatMessage],
-              lastMessage: content,
-              time: chatMessage.time
-            } : null
+          setConversations(prev => 
+            prev.map(conv => 
+              conv.id === conversationId 
+                ? {
+                    ...conv,
+                    conversation: [...conv.conversation, chatMessage],
+                    lastMessage: content,
+                    time: chatMessage.time
+                  }
+                : conv
+            )
           );
+
+          if (selectedConversation?.id === conversationId) {
+            setSelectedConversation(prev => 
+              prev ? {
+                ...prev,
+                conversation: [...prev.conversation, chatMessage],
+                lastMessage: content,
+                time: chatMessage.time
+              } : null
+            );
+          }
         }
+        // If WebSocket is connected, the broadcast will update the UI
+        
       } catch (apiError) {
         // Si el backend no está disponible, simular envío local
         console.log('Backend no disponible, simulando envío local');
@@ -230,9 +235,9 @@ export function useMessages() {
           isRead: message.is_read
         };
 
-        // Update conversations
-        setConversations(prev => 
-          prev.map(conv => {
+        // Update conversations list
+        setConversations(prev => {
+          return prev.map(conv => {
             if (conv.id === convId) {
               // Check if message already exists
               const exists = conv.conversation.some(m => m.messageId === message.id);
@@ -247,38 +252,31 @@ export function useMessages() {
               };
             }
             return conv;
-          })
-        );
-
-        // Update selected conversation if it matches
-        if (selectedConversation?.id === convId) {
-          setSelectedConversation(prev => {
-            if (!prev) return null;
-            
-            const exists = prev.conversation.some(m => m.messageId === message.id);
-            if (exists) return prev;
-            
-            return {
-              ...prev,
-              conversation: [...prev.conversation, chatMessage],
-              lastMessage: chatMessage.text,
-              time: chatMessage.time
-            };
           });
-        }
+        });
 
-        // Also reload to ensure everything is in sync
-        loadConversations();
+        // Update selectedConversation separately
+        setSelectedConversation(prev => {
+          if (!prev || prev.id !== convId) return prev;
+          
+          const exists = prev.conversation.some(m => m.messageId === message.id);
+          if (exists) return prev;
+          
+          return {
+            ...prev,
+            conversation: [...prev.conversation, chatMessage],
+            lastMessage: chatMessage.text,
+            time: chatMessage.time
+          };
+        });
       },
       
       onMessageRead: (messageId: number) => {
         console.log('Message marked as read:', messageId);
-        loadConversations();
       },
       
       onConversationUpdated: (conversation: ConversationResponse) => {
         console.log('Conversation updated:', conversation);
-        loadConversations();
       },
       
       onConnect: () => {
@@ -304,7 +302,7 @@ export function useMessages() {
     return () => {
       wsService.disconnect();
     };
-  }, [selectedConversation, loadConversations]); // Include dependencies
+  }, []); // Empty dependencies - only run on mount/unmount
 
   // Cargar conversaciones al montar el componente
   useEffect(() => {
