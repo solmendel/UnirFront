@@ -215,28 +215,78 @@ export function useMessages() {
   useEffect(() => {
     const callbacks = {
       onNewMessage: (message: MessageResponse) => {
-        console.log('New message received:', message);
+        console.log('New message received via WebSocket:', message);
         
-        // Recargar conversaciones para obtener el estado más actualizado
+        // Update the specific conversation with the new message
+        const convId = message.conversation_id.toString();
+        
+        // Convert the incoming message to ChatMessage format
+        const chatMessage: ChatMessage = {
+          id: message.id.toString(),
+          text: message.content,
+          sender: message.direction === 'incoming' ? 'user' : 'me',
+          time: apiService['formatTime'](new Date(message.timestamp)),
+          messageId: message.id,
+          isRead: message.is_read
+        };
+
+        // Update conversations
+        setConversations(prev => 
+          prev.map(conv => {
+            if (conv.id === convId) {
+              // Check if message already exists
+              const exists = conv.conversation.some(m => m.messageId === message.id);
+              if (exists) return conv;
+              
+              return {
+                ...conv,
+                conversation: [...conv.conversation, chatMessage],
+                lastMessage: chatMessage.text,
+                time: chatMessage.time,
+                unread: message.direction === 'incoming' && !message.is_read
+              };
+            }
+            return conv;
+          })
+        );
+
+        // Update selected conversation if it matches
+        if (selectedConversation?.id === convId) {
+          setSelectedConversation(prev => {
+            if (!prev) return null;
+            
+            const exists = prev.conversation.some(m => m.messageId === message.id);
+            if (exists) return prev;
+            
+            return {
+              ...prev,
+              conversation: [...prev.conversation, chatMessage],
+              lastMessage: chatMessage.text,
+              time: chatMessage.time
+            };
+          });
+        }
+
+        // Also reload to ensure everything is in sync
         loadConversations();
       },
       
       onMessageRead: (messageId: number) => {
-        // Recargar conversaciones cuando un mensaje se marca como leído
+        console.log('Message marked as read:', messageId);
         loadConversations();
       },
       
       onConversationUpdated: (conversation: ConversationResponse) => {
-        // Recargar conversaciones cuando se actualiza
+        console.log('Conversation updated:', conversation);
         loadConversations();
       },
       
       onConnect: () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket connected - Real-time updates active');
       },
       
       onDisconnect: () => {
-        console.log('WebSocket disconnected');
+        console.log('⚠️ WebSocket disconnected');
       },
       
       onError: (error: Event) => {
@@ -254,7 +304,7 @@ export function useMessages() {
     return () => {
       wsService.disconnect();
     };
-  }, []); // Empty dependencies - only run on mount/unmount
+  }, [selectedConversation, loadConversations]); // Include dependencies
 
   // Cargar conversaciones al montar el componente
   useEffect(() => {

@@ -181,6 +181,104 @@
       "external_message_id": null,
       "is_read": false,
       "created_at": "2025-10-28T11:18:25.722Z"
+    },
+    {
+      "id": 5,
+      "content": "This is a test message from ThunderClient!",
+      "message_type": "text",
+      "direction": "incoming",
+      "sender_name": "María González",
+      "sender_identifier": "+1234567890",
+      "timestamp": "2025-10-28T12:00:00.000Z",
+      "message_metadata": null,
+      "conversation_id": 1,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:33:54.186Z"
+    },
+    {
+      "id": 6,
+      "content": "This is a test message from ThunderClient!",
+      "message_type": "text",
+      "direction": "incoming",
+      "sender_name": "María González",
+      "sender_identifier": "+1234567890",
+      "timestamp": "2025-10-28T12:00:00.000Z",
+      "message_metadata": null,
+      "conversation_id": 1,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:37:54.586Z"
+    },
+    {
+      "id": 7,
+      "content": "test",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-28T11:44:55.706Z",
+      "message_metadata": null,
+      "conversation_id": 3,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:44:55.706Z"
+    },
+    {
+      "id": 8,
+      "content": "Mensaje enviado desde WHATSAPP",
+      "message_type": "text",
+      "direction": "incoming",
+      "sender_name": "Carlos Ruiz",
+      "sender_identifier": "+0987654321",
+      "timestamp": "2025-10-28T12:30:00.000Z",
+      "message_metadata": null,
+      "conversation_id": 2,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:47:24.493Z"
+    },
+    {
+      "id": 9,
+      "content": "Mensaje enviado desde UNIR",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-28T11:47:35.005Z",
+      "message_metadata": null,
+      "conversation_id": 2,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:47:35.008Z"
+    },
+    {
+      "id": 10,
+      "content": "Mensaje enviado desde WHATSAPP",
+      "message_type": "text",
+      "direction": "incoming",
+      "sender_name": "Pedro López",
+      "sender_identifier": "+1122334455",
+      "timestamp": "2025-10-28T12:30:00.000Z",
+      "message_metadata": null,
+      "conversation_id": 4,
+      "external_message_id": null,
+      "is_read": true,
+      "created_at": "2025-10-28T11:52:21.924Z"
+    },
+    {
+      "id": 11,
+      "content": "Mensaje enviado desde UNIR",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-28T11:52:32.055Z",
+      "message_metadata": null,
+      "conversation_id": 4,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-28T11:52:32.057Z"
     }
   ],
   "conversations": [
@@ -235,6 +333,6 @@
       "updated_at": "2025-10-25T11:13:56.906Z"
     }
   ],
-  "messageCounter": 5,
+  "messageCounter": 12,
   "conversationCounter": 1
 }

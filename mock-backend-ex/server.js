@@ -342,6 +342,10 @@ app.post('/api/v1/messages', (req, res) => {
   const { content, message_type, direction, sender_name, sender_identifier, timestamp, 
           message_metadata, conversation_id, external_message_id } = req.body;
 
+  console.log('📨 Mensaje recibido desde UNIR');
+  console.log(`   Contenido: "${content}"`);
+  console.log(`   Conversación: ${conversation_id} | De: ${sender_identifier}`);
+
   // Validate required fields
   if (!content || !direction || !sender_identifier || !timestamp || !conversation_id) {
     return res.status(400).json({ 
