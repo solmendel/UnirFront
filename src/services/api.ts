@@ -207,6 +207,7 @@ class ApiService {
     // Handle case where messages might not be included (when fetching list of conversations)
     const messages = conversationResponse.messages || [];
     
+    // Messages should already be sorted chronologically (oldest first) from the backend
     const chatMessages: ChatMessage[] = messages.map(msg => ({
       id: msg.id.toString(),
       text: msg.content,
@@ -224,8 +225,10 @@ class ApiService {
       lastMessage = conversationResponse.last_message.content;
       lastMessageTime = this.formatTime(new Date(conversationResponse.last_message.timestamp));
     } else if (messages.length > 0) {
-      lastMessage = messages[messages.length - 1].content;
-      lastMessageTime = this.formatTime(new Date(messages[messages.length - 1].timestamp));
+      // Get the last message (last in array since messages are sorted oldest to newest)
+      const lastMsg = messages[messages.length - 1];
+      lastMessage = lastMsg.content;
+      lastMessageTime = this.formatTime(new Date(lastMsg.timestamp));
     }
 
     // Check has_unread field or count unread messages

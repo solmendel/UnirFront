@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 
 // Initialize express-ws for the app
@@ -13,11 +15,45 @@ app.use(express.json());
 // Store for WebSocket connections
 const connections = [];
 
+// File-based storage
+const DATA_FILE = path.join(__dirname, 'data.json');
+
 // Mock data storage
 let messages = [];
 let conversations = [];
 let messageCounter = 1;
 let conversationCounter = 1;
+
+// Load data from file
+function loadData() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      messages = data.messages || [];
+      conversations = data.conversations || [];
+      messageCounter = data.messageCounter || 1;
+      conversationCounter = data.conversationCounter || 1;
+      console.log(`📂 Loaded ${messages.length} messages and ${conversations.length} conversations from disk`);
+    }
+  } catch (error) {
+    console.error('Error loading data from file:', error);
+  }
+}
+
+// Save data to file
+function saveData() {
+  try {
+    const data = {
+      messages,
+      conversations,
+      messageCounter,
+      conversationCounter
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error saving data to file:', error);
+  }
+}
 
 // Initialize mock data to match core API
 const mockChannels = [
@@ -213,9 +249,16 @@ const mockMessages = [
   }
 ];
 
-// Initialize storage
-conversations = JSON.parse(JSON.stringify(mockConversations));
-messages = JSON.parse(JSON.stringify(mockMessages));
+// Initialize storage - first try to load from disk, otherwise use mock data
+loadData();
+
+// If no data was loaded from file, initialize with mock data
+if (messages.length === 0 && conversations.length === 0) {
+  conversations = JSON.parse(JSON.stringify(mockConversations));
+  messages = JSON.parse(JSON.stringify(mockMessages));
+  saveData(); // Save initial data
+  console.log('📝 Initialized with mock data');
+}
 
 // Utility function to send message to all connected clients
 function broadcastToAll(type, data) {
@@ -322,6 +365,7 @@ app.post('/api/v1/messages', (req, res) => {
   };
 
   messages.push(newMessage);
+  saveData();
   broadcastToAll('new_message', newMessage);
   res.json(newMessage);
 });
@@ -332,6 +376,7 @@ app.put('/api/v1/messages/:message_id/read', (req, res) => {
     return res.status(404).json({ detail: 'Message not found' });
   }
   message.is_read = true;
+  saveData();
   broadcastToAll('message_read', { messageId: message.id });
   res.json({ status: 'success', message: 'Message marked as read' });
 });
@@ -378,6 +423,7 @@ app.post('/api/v1/messages/unified', (req, res) => {
       updated_at: toISOString(timestamp)
     };
     conversations.push(conversation);
+    saveData();
   }
 
   // Create message (direction is "incoming" for unified messages)
@@ -397,6 +443,7 @@ app.post('/api/v1/messages/unified', (req, res) => {
   };
 
   messages.push(newMessage);
+  saveData();
   broadcastToAll('new_message', newMessage);
 
   // Return in format expected by core API
@@ -451,6 +498,7 @@ app.post('/api/v1/send', async (req, res) => {
       updated_at: new Date().toISOString()
     };
     conversations.push(conversation);
+    saveData();
   }
 
   // Create outbound message
@@ -471,6 +519,7 @@ app.post('/api/v1/send', async (req, res) => {
   };
 
   messages.push(newMessage);
+  saveData();
   broadcastToAll('new_message', newMessage);
 
   // Return in format expected by core API
@@ -537,12 +586,12 @@ app.get('/api/v1/conversations/:conversation_id', (req, res) => {
   // Get messages for this conversation
   const conversationMessages = messages.filter(m => m.conversation_id === conversation.id);
   
-  // Sort by timestamp descending (most recent first)
-  conversationMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
+  // Sort by timestamp ascending (oldest first) for chat display
+  conversationMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  
   // Apply limit
   const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-  const limitedMessages = conversationMessages.slice(0, limit);
+  const limitedMessages = conversationMessages.slice(-limit); // Get the most recent N messages
 
   res.json({
     ...conversation,
@@ -575,6 +624,7 @@ app.post('/api/v1/conversations', (req, res) => {
   };
 
   conversations.push(newConversation);
+  saveData();
   broadcastToAll('conversation_updated', newConversation);
   res.json(newConversation);
 });
@@ -590,6 +640,7 @@ app.put('/api/v1/conversations/:conversation_id/participant', (req, res) => {
   if (participantName) {
     conversation.participant_name = participantName;
     conversation.updated_at = new Date().toISOString();
+    saveData();
     broadcastToAll('conversation_updated', conversation);
   }
 
@@ -604,6 +655,7 @@ app.put('/api/v1/conversations/:conversation_id/deactivate', (req, res) => {
 
   conversation.is_active = false;
   conversation.updated_at = new Date().toISOString();
+  saveData();
   broadcastToAll('conversation_updated', conversation);
   res.json({ status: 'success', message: 'Conversation deactivated' });
 });
