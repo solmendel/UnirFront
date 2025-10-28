@@ -735,7 +735,7 @@ app.ws('/ws', (ws, req) => {
 
 // ========== START SERVER ==========
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8003;
 
 const server = app.listen(PORT, () => {
   console.log(`\n🚀 UNIR Mock Backend Server running on http://localhost:${PORT}`);

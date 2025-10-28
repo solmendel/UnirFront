@@ -2,8 +2,9 @@
 export const API_CONFIG = {
   // Cambiar estas URLs según tu configuración de backend
   // Vite usa VITE_ prefix for environment variables
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
-  wsUrl: import.meta.env.VITE_WS_URL || 'ws://localhost:8000',
+  // Default: Both Mock and Core API run on port 8003
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8003',
+  wsUrl: import.meta.env.VITE_WS_URL || 'ws://localhost:8003',
   
   // Configuración de canales (ajustar según tu backend)
   channels: {
