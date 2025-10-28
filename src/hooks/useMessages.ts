@@ -15,16 +15,26 @@ export function useMessages() {
       setIsLoading(true);
       setError(null);
       
-      // Intentar cargar conversaciones del backend
+      // Intentar cargar conversaciones del backend de todas las plataformas
       try {
-        const conversationResponses = await apiService.getConversations({ limit: 100 });
-        const convertedConversations = conversationResponses.map(conv => 
-          apiService.convertToConversation(conv)
-        );
-        setConversations(convertedConversations);
+        // Load from all 3 platforms
+        const [whatsappConvs, instagramConvs, gmailConvs] = await Promise.all([
+          apiService.whatsapp.getConversations(),
+          apiService.instagram.getConversations(),
+          apiService.gmail.getConversations()
+        ]);
+        
+        // Convert all conversations
+        const allConversations = [
+          ...whatsappConvs.map(conv => apiService.convertToConversation(conv)),
+          ...instagramConvs.map(conv => apiService.convertToConversation(conv)),
+          ...gmailConvs.map(conv => apiService.convertToConversation(conv))
+        ];
+        
+        setConversations(allConversations);
       } catch (apiError) {
         // Si el backend no está disponible, mostrar lista vacía
-        console.log('Backend no disponible, mostrando lista vacía');
+        console.log('Backend no disponible, mostrando lista vacía:', apiError);
         setConversations([]);
         setError('Backend no configurado - Los mensajes aparecerán cuando se conecte el servidor');
       }

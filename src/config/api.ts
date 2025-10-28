@@ -1,8 +1,8 @@
 // Configuración de la API
 export const API_CONFIG = {
   // Cambiar estas URLs según tu configuración de backend
-  baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:8000',
-  wsUrl: process.env.REACT_APP_WS_URL || 'ws://localhost:8000',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  wsUrl: import.meta.env.VITE_WS_URL || 'ws://localhost:8001',
   
   // Configuración de canales (ajustar según tu backend)
   channels: {

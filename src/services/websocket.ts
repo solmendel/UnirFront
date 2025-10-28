@@ -65,7 +65,8 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // Silently handle WebSocket errors - it will attempt to reconnect
+        console.log('WebSocket connection attempt failed, will retry...');
         this.isConnecting = false;
         this.callbacks.onError?.(error);
       };

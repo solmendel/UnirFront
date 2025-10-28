@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Mail } from 'lucide-react';
-import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
+import logo from '../assets/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
 
 interface LoginPageProps {
   onLogin: (userData?: { email: string; name: string }) => void;
@@ -28,6 +28,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     try {
       // Decode the JWT token to get user information
       const decoded: any = jwtDecode(credentialResponse.credential);
+
+      console.log(decoded);
       
       // Extract user data from Google response
       const userData = {

@@ -7,10 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
-// import { useMessages } from '../hooks/useMessages'; // Temporalmente deshabilitado
-import { Conversation, ChatMessage } from '../types/api';
-
-// Los tipos ya están importados desde '../types/api'
+import { useMessages } from '../hooks/useMessages';
 
 const templates = [
   { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
@@ -19,154 +16,18 @@ const templates = [
   { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
 ];
 
-// Datos de ejemplo para mostrar la interfaz
-const initialConversations: Conversation[] = [
-  {
-    id: '1',
-    participantName: 'María González',
-    participantIdentifier: '+1234567890',
-    platform: 'whatsapp',
-    lastMessage: 'Hola, tengo una consulta sobre el producto...',
-    time: '10:30',
-    unread: true,
-    conversation: [
-      {
-        id: '1-1',
-        text: 'Hola, tengo una consulta sobre el producto que publicaron ayer. ¿Está disponible en otros colores?',
-        sender: 'user',
-        time: '10:30',
-        messageId: 1,
-        isRead: false
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_1234567890'
-  },
-  {
-    id: '2',
-    participantName: 'Carlos Ruiz',
-    participantIdentifier: '+0987654321',
-    platform: 'whatsapp',
-    lastMessage: 'Gracias por la información',
-    time: '09:45',
-    unread: false,
-    conversation: [
-      {
-        id: '2-1',
-        text: 'Hola, me gustaría información sobre sus servicios',
-        sender: 'user',
-        time: '09:30',
-        messageId: 2,
-        isRead: true
-      },
-      {
-        id: '2-2',
-        text: 'Por supuesto, contamos con diversos planes que se adaptan a tus necesidades.',
-        sender: 'me',
-        time: '09:35',
-        messageId: 3,
-        isRead: true
-      },
-      {
-        id: '2-3',
-        text: 'Gracias por la información. Me gustaría proceder con la compra.',
-        sender: 'user',
-        time: '09:45',
-        messageId: 4,
-        isRead: true
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_0987654321'
-  },
-  {
-    id: '3',
-    participantName: 'Ana Martínez',
-    participantIdentifier: 'ana.martinez@email.com',
-    platform: 'gmail',
-    lastMessage: 'Consulta sobre el pedido #1234',
-    time: 'Ayer',
-    unread: true,
-    conversation: [
-      {
-        id: '3-1',
-        text: 'Buenos días, escribo para consultar sobre el estado de mi pedido #1234. ¿Cuándo llegará?',
-        sender: 'user',
-        time: 'Ayer 15:20',
-        messageId: 5,
-        isRead: false
-      }
-    ],
-    channelId: 3,
-    externalId: 'gmail_ana_martinez'
-  },
-  {
-    id: '4',
-    participantName: 'Pedro López',
-    participantIdentifier: '+1122334455',
-    platform: 'whatsapp',
-    lastMessage: '¿Tienen envío a domicilio?',
-    time: 'Ayer',
-    unread: false,
-    conversation: [
-      {
-        id: '4-1',
-        text: '¿Tienen envío a domicilio? ¿Cuál es el costo?',
-        sender: 'user',
-        time: 'Ayer 12:00',
-        messageId: 6,
-        isRead: true
-      },
-      {
-        id: '4-2',
-        text: 'Sí, tenemos envío a domicilio. El costo varía según la zona, entre $50 y $100.',
-        sender: 'me',
-        time: 'Ayer 12:15',
-        messageId: 7,
-        isRead: true
-      }
-    ],
-    channelId: 1,
-    externalId: 'wa_1122334455'
-  },
-  {
-    id: '5',
-    participantName: 'Laura Torres',
-    participantIdentifier: '@laura_torres',
-    platform: 'instagram',
-    lastMessage: 'Me encanta su contenido',
-    time: '15 Mar',
-    unread: false,
-    conversation: [
-      {
-        id: '5-1',
-        text: 'Me encanta su contenido. ¿Hacen colaboraciones con influencers?',
-        sender: 'user',
-        time: '15 Mar 18:00',
-        messageId: 8,
-        isRead: true
-      },
-      {
-        id: '5-2',
-        text: '¡Gracias! Sí, estamos abiertos a colaboraciones. Te enviaré más información.',
-        sender: 'me',
-        time: '15 Mar 18:30',
-        messageId: 9,
-        isRead: true
-      }
-    ],
-    channelId: 2,
-    externalId: 'ig_laura_torres'
-  }
-];
-
 export function MessagesPage() {
-  // Estado para manejar conversaciones (preparado para integrar con backend)
-  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false); // Cambiará a true cuando se conecte el backend
+  // Use the real API hook
+  const {
+    conversations,
+    selectedConversation,
+    setSelectedConversation,
+    isLoading,
+    error,
+    sendMessage,
+    markMessageAsRead,
+    isConnected
+  } = useMessages();
 
   const [filter, setFilter] = useState<string>('all');
   const [reply, setReply] = useState('');
@@ -206,43 +67,17 @@ export function MessagesPage() {
 
     setIsSending(true);
     try {
-      // Simular envío de mensaje (en modo demo)
-      const now = new Date();
-      const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-      const newChatMessage: ChatMessage = {
-        id: `${selectedConversation.id}-${selectedConversation.conversation.length + 1}`,
-        text: reply,
-        sender: 'me',
-        time: timeString,
-        messageId: Date.now(),
-        isRead: true
-      };
-
-      // Actualizar la conversación localmente
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                conversation: [...conv.conversation, newChatMessage],
-                lastMessage: reply,
-                time: timeString
-              }
-            : conv
-        )
+      const platform = selectedConversation.platform;
+      const participantIdentifier = selectedConversation.participantIdentifier;
+      
+      // Send message via the API
+      await sendMessage(
+        selectedConversation.id,
+        reply,
+        'text'
       );
 
-      // Actualizar conversación seleccionada
-      setSelectedConversation(prev => 
-        prev ? {
-          ...prev,
-          conversation: [...prev.conversation, newChatMessage],
-          lastMessage: reply,
-          time: timeString
-        } : null
-      );
-
+      // Clear reply field
       setReply('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -251,40 +86,19 @@ export function MessagesPage() {
     }
   };
 
-  // Marcar mensajes como leídos cuando se selecciona una conversación
+  // Mark messages as read when selecting a conversation
   useEffect(() => {
     if (selectedConversation) {
-      // Marcar mensajes no leídos como leídos
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                conversation: conv.conversation.map(msg => 
-                  msg.sender === 'user' && !msg.isRead 
-                    ? { ...msg, isRead: true }
-                    : msg
-                ),
-                unread: false
-              }
-            : conv
-        )
-      );
-
-      // Actualizar conversación seleccionada
-      setSelectedConversation(prev => 
-        prev ? {
-          ...prev,
-          conversation: prev.conversation.map(msg => 
-            msg.sender === 'user' && !msg.isRead 
-              ? { ...msg, isRead: true }
-              : msg
-          ),
-          unread: false
-        } : null
-      );
+      // Mark unread inbound messages as read
+      selectedConversation.conversation
+        .filter(msg => msg.sender === 'user' && !msg.isRead)
+        .forEach(msg => {
+          if (msg.messageId) {
+            markMessageAsRead(msg.messageId);
+          }
+        });
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, markMessageAsRead]);
 
   if (isLoading) {
     return (
@@ -351,186 +165,170 @@ export function MessagesPage() {
             </Button>
           </div>
         </div>
-        
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Lista de mensajes */}
+        {/* Lista de conversaciones */}
         <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col">
           <div className="p-4 border-b flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar mensajes..."
+                type="text"
+                placeholder="Buscar conversaciones..."
                 className="pl-10 rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
-          
+
           <ScrollArea className="flex-1">
-            <div className="p-2 pb-6">
+            <div className="divide-y">
               {error && (
-                <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-700">{error}</span>
+                <div className="p-4">
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+                    <AlertCircle className="h-4 w-4" />
+                    {error}
                   </div>
                 </div>
               )}
-              
-              <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-blue-700">
-                    Modo demo activo - Los datos son de ejemplo. Configura el backend para conectar con WhatsApp real.
-                  </span>
-                </div>
-              </div>
-              
-              {filteredConversations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No hay conversaciones que coincidan con el filtro</p>
-                  <p className="text-sm mt-2">Prueba cambiar el filtro o la búsqueda</p>
-                </div>
-              ) : (
-                filteredConversations.map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
-                    className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
-                      selectedConversation?.id === conversation.id
-                        ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
-                        : 'hover:bg-white/80'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{conversation.participantName}</span>
+              {filteredConversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  onClick={() => setSelectedConversation(conversation)}
+                  className={`p-4 cursor-pointer transition-colors hover:bg-pink-50/50 ${
+                    selectedConversation?.id === conversation.id ? 'bg-pink-100/50' : ''
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0"
+                      style={{ backgroundColor: platformColors[conversation.platform] }}
+                    >
+                      {platformIcons[conversation.platform]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold truncate">{conversation.participantName}</p>
                         {conversation.unread && (
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
+                          <Badge className="bg-pink-500 text-white">Nuevo</Badge>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground">{conversation.time}</span>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {conversation.lastMessage}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{conversation.time}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                      {conversation.lastMessage}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
-                      {platformIcons[conversation.platform]}
-                      <span className="capitalize">{conversation.platform}</span>
-                    </div>
-                  </button>
-                ))
+                  </div>
+                </div>
+              ))}
+              {filteredConversations.length === 0 && !isLoading && (
+                <div className="p-4 text-center text-muted-foreground">
+                  No hay conversaciones
+                </div>
               )}
             </div>
           </ScrollArea>
         </div>
 
-        {/* Vista de conversación */}
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Vista de chat */}
+        <div className="flex-1 flex flex-col bg-white/50">
           {selectedConversation ? (
             <>
-              <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3>{selectedConversation.participantName}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
-                        {platformIcons[selectedConversation.platform]}
-                        <span className="ml-1 capitalize">{selectedConversation.platform}</span>
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {selectedConversation.participantIdentifier}
-                      </span>
-                    </div>
-                  </div>
+              {/* Header del chat */}
+              <div className="border-b bg-white/80 backdrop-blur-sm p-4 flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                  style={{ backgroundColor: platformColors[selectedConversation.platform] }}
+                >
+                  {platformIcons[selectedConversation.platform]}
+                </div>
+                <div>
+                  <p className="font-semibold">{selectedConversation.participantName}</p>
+                  <p className="text-sm text-muted-foreground">{selectedConversation.platform}</p>
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-4 max-w-3xl pb-6">
-                  {selectedConversation.conversation.map((chat) => (
-                    <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''}`} style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}>
-                        {chat.sender === 'me' ? 'Yo' : selectedConversation.participantName.charAt(0)}
-                      </div>
-                      <div className="flex-1 max-w-lg">
-                        <div className={`rounded-2xl p-4 shadow-sm ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm' : 'bg-white rounded-tl-sm'}`}>
-                          <p>{chat.text}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 ml-1">
-                          <span className="text-xs text-muted-foreground">{chat.time}</span>
-                          {!chat.isRead && chat.sender === 'user' && (
-                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          )}
-                        </div>
+              {/* Mensajes */}
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {selectedConversation.conversation.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                          message.sender === 'me'
+                            ? 'bg-pink-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <p>{message.text}</p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            message.sender === 'me' ? 'text-pink-100' : 'text-muted-foreground'
+                          }`}
+                        >
+                          {message.time}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               </ScrollArea>
 
-              <div className="border-t bg-white/80 backdrop-blur-sm p-6 flex-shrink-0">
-                <div className="max-w-3xl space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Plantilla:</span>
-                    <Select onValueChange={(value) => {
-                      const template = templates.find(t => t.id === value);
-                      if (template) handleTemplateSelect(template.content);
-                    }}>
-                      <SelectTrigger className="w-64 rounded-xl">
-                        <SelectValue placeholder="Seleccionar plantilla" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* Plantillas */}
+              <div className="border-t bg-white/80 backdrop-blur-sm p-3">
+                <ScrollArea className="flex gap-2">
                   <div className="flex gap-2">
-                    <Textarea
-                      placeholder="Escribe tu respuesta..."
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      className="rounded-xl resize-none"
-                      rows={3}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      disabled={isSending}
-                    />
-                    <Button 
-                      className="rounded-xl h-auto" 
-                      style={{ backgroundColor: '#acce60' }}
-                      onClick={handleSendMessage}
-                      disabled={!reply.trim() || isSending}
-                    >
-                      {isSending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
+                    {templates.map((template) => (
+                      <Button
+                        key={template.id}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg text-xs whitespace-nowrap"
+                        onClick={() => handleTemplateSelect(template.content)}
+                      >
+                        {template.name}
+                      </Button>
+                    ))}
                   </div>
-                </div>
+                </ScrollArea>
+              </div>
+
+              {/* Input de respuesta */}
+              <div className="border-t bg-white/80 backdrop-blur-sm p-4 flex gap-2">
+                <Textarea
+                  placeholder="Escribe un mensaje..."
+                  className="rounded-xl"
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!reply.trim() || isSending}
+                  className="rounded-xl"
+                  style={{ backgroundColor: '#ec6c8c' }}
+                >
+                  {isSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                <p>Selecciona una conversación para ver los mensajes</p>
-                <p className="text-sm mt-2">Puedes responder usando las plantillas o escribiendo tu propio mensaje</p>
-              </div>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-muted-foreground">Selecciona una conversación</p>
             </div>
           )}
         </div>

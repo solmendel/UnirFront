@@ -7,7 +7,7 @@ import { MetricsPage } from './components/MetricsPage';
 import { MessageSquare, History, Users, BarChart3, LogOut } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
-import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
+import logo from './assets/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
 
 type Page = 'messages' | 'history' | 'collaborators' | 'metrics';
 
