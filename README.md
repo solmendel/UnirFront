@@ -76,4 +76,51 @@ Run `npm run dev` to start the development server.
 ### For Production:
 - Add your production domain to authorized origins
 - Update redirect URIs for production URL
+
+## Mock Backend for Testing
+
+A mock backend is available for testing the frontend without connecting to a real backend server.
+
+### Quick Start
+
+1. **Navigate to the mock backend folder:**
+   ```bash
+   cd mock-backend-ex
+   ```
+
+2. **Install dependencies (first time only):**
+   ```bash
+   npm install
+   ```
+
+3. **Start the mock backend:**
+   ```bash
+   npm start
+   ```
+   
+   The server will start on `http://localhost:8000`
+
+4. **Configure the frontend** (if not already done):
+   
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   VITE_WS_URL=ws://localhost:8000
+   ```
+
+5. **Start the frontend** (in the main project directory):
+   ```bash
+   npm run dev
+   ```
+
+The frontend will now connect to the mock backend for testing.
+
+### Mock Backend Features
+
+- ✅ All API endpoints implemented
+- ✅ WebSocket support for real-time updates
+- ✅ Pre-loaded sample data (conversations, messages)
+- ✅ Auto-reset on server restart
+
+For more information, see [mock-backend-ex/README.md](./mock-backend-ex/README.md)
   

@@ -92,12 +92,12 @@ class ApiService {
     });
   }
 
-  async getUnreadCount(conversationId?: number): Promise<{ count: number }> {
+  async getUnreadCount(conversationId?: number): Promise<{ unread_count: number }> {
     const endpoint = conversationId 
       ? `/api/v1/messages/unread/count?conversation_id=${conversationId}`
       : '/api/v1/messages/unread/count';
     
-    return this.request<{ count: number }>(endpoint);
+    return this.request<{ unread_count: number }>(endpoint);
   }
 
   async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
@@ -183,15 +183,20 @@ class ApiService {
     });
   }
 
-  // Health check
-  async healthCheck(): Promise<any> {
+  // Health & Status
+  async rootHealthCheck(): Promise<any> {
+    return this.request<any>('/');
+  }
+
+  async detailedHealthCheck(): Promise<any> {
     return this.request<any>('/health');
   }
 
   // Broadcast (para WebSocket)
   async broadcast(message: string): Promise<void> {
-    return this.request<void>(`/broadcast?message=${encodeURIComponent(message)}`, {
+    return this.request<void>(`/broadcast`, {
       method: 'POST',
+      body: JSON.stringify({ message }),
     });
   }
 
@@ -202,14 +207,14 @@ class ApiService {
     const chatMessages: ChatMessage[] = conversationResponse.messages.map(msg => ({
       id: msg.id.toString(),
       text: msg.content,
-      sender: msg.direction === 'inbound' ? 'user' : 'me',
+      sender: msg.direction === 'incoming' ? 'user' : 'me',
       time: this.formatTime(new Date(msg.timestamp)),
       messageId: msg.id,
       isRead: msg.is_read
     }));
 
     const lastMessage = conversationResponse.messages[conversationResponse.messages.length - 1];
-    const unreadCount = conversationResponse.messages.filter(msg => !msg.is_read && msg.direction === 'inbound').length;
+    const unreadCount = conversationResponse.messages.filter(msg => !msg.is_read && msg.direction === 'incoming').length;
 
     return {
       id: conversationResponse.id.toString(),

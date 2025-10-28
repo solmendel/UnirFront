@@ -67,7 +67,7 @@ export function useMessages() {
       const messageData = {
         content,
         message_type: messageType,
-        direction: 'outbound',
+        direction: 'outgoing',
         sender_identifier: 'admin', // Identificador del admin
         timestamp: new Date().toISOString(),
         conversation_id: parseInt(conversationId),
@@ -226,7 +226,7 @@ export function useMessages() {
           const chatMessage: ChatMessage = {
             id: message.id.toString(),
             text: message.content,
-            sender: message.direction === 'inbound' ? 'user' : 'me',
+            sender: message.direction === 'incoming' ? 'user' : 'me',
             time: apiService['formatTime'](new Date(message.timestamp)),
             messageId: message.id,
             isRead: message.is_read
@@ -240,7 +240,7 @@ export function useMessages() {
                     conversation: [...conv.conversation, chatMessage],
                     lastMessage: message.content,
                     time: chatMessage.time,
-                    unread: message.direction === 'inbound' ? true : conv.unread
+                    unread: message.direction === 'incoming' ? true : conv.unread
                   }
                 : conv
             )

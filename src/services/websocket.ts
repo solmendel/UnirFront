@@ -24,7 +24,7 @@ class WebSocketService {
   private reconnectInterval = API_CONFIG.websocket.reconnectInterval;
   private isConnecting = false;
 
-  constructor(private wsUrl: string = API_CONFIG.wsUrl) {}
+  constructor(private wsUrl: string = `${API_CONFIG.wsUrl}/ws`) {}
 
   connect(callbacks: WebSocketCallbacks = {}): void {
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
