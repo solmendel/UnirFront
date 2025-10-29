@@ -165,7 +165,7 @@ export function MessagesPage() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 overflow-hidden min-h-0">
             <div className="p-2 pb-6">
               {error && (
                 <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
@@ -222,7 +222,7 @@ export function MessagesPage() {
               </div>
 
               <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-4 max-w-3xl pb-6">
+                <div className="space-y-4 w-full pb-6">
                   {selectedConversation.conversation.map((chat) => (
                     <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
                       <div
@@ -252,8 +252,8 @@ export function MessagesPage() {
 
               {/* Área de plantillas + entrada */}
               <div className="border-t bg-white/80 backdrop-blur-sm p-6 flex-shrink-0">
-                <div className="max-w-3xl space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+                <div className="w-full space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">Plantilla:</span>
                       <Select onValueChange={(value) => {
