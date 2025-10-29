@@ -33,7 +33,11 @@ export function useMessages() {
         const convertedConversations = conversationResponses.map((conv) =>
           apiService.convertToConversation(conv)
         );
-        setConversations(convertedConversations);
+        // Filtrar conversaciones que contengan "invertir" en el nombre del participante
+        const filteredConversations = convertedConversations.filter(
+          (conv) => !conv.participantName.toLowerCase().includes('invertir')
+        );
+        setConversations(filteredConversations);
       } catch (apiError: any) {
         console.warn("⚠️ No se pudo conectar al Core:", apiError.message);
         // En vez de error fuerte, mostramos mensaje informativo
