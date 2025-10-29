@@ -7,10 +7,10 @@ const jwt = require('jsonwebtoken');
  */
 async function registrar(req, res) {
   try {
-    const { nombre, password } = req.body;
+    const { mail, password } = req.body;
 
     // Validar que se envíen los campos requeridos
-    if (!nombre || !password) {
+    if (!mail || !password) {
       return res.status(400).json({ 
         error: 'Email y contraseña son requeridos' 
       });
@@ -18,14 +18,14 @@ async function registrar(req, res) {
 
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(nombre)) {
+    if (!emailRegex.test(mail)) {
       return res.status(400).json({ 
         error: 'El formato del email no es válido' 
       });
     }
 
     // Verificar si el usuario ya existe
-    const usuarioExistente = await usuariosModel.getUsuarioPorNombre(nombre);
+    const usuarioExistente = await usuariosModel.getUsuarioPorMail(mail);
     if (usuarioExistente) {
       return res.status(409).json({ 
         error: 'El email ya está registrado' 
@@ -37,14 +37,14 @@ async function registrar(req, res) {
 
     // Crear el usuario
     const nuevoId = await usuariosModel.createUsuario({
-      nombre,
+      mail: mail,
       password: passwordHasheada
     });
 
     res.status(201).json({ 
       mensaje: 'Usuario registrado exitosamente',
       id: nuevoId,
-      email: nombre
+      email: mail
     });
 
   } catch (err) {
@@ -60,17 +60,17 @@ async function registrar(req, res) {
  */
 async function login(req, res) {
   try {
-    const { nombre, password } = req.body;
+    const { mail, password } = req.body;
 
     // Validar que se envíen los campos requeridos
-    if (!nombre || !password) {
+    if (!mail || !password) {
       return res.status(400).json({ 
         error: 'Email y contraseña son requeridos' 
       });
     }
 
     // Buscar el usuario por email
-    const usuario = await usuariosModel.getUsuarioPorNombre(nombre);
+    const usuario = await usuariosModel.getUsuarioPorMail(mail);
 
     if (!usuario) {
       return res.status(401).json({ 
@@ -90,9 +90,9 @@ async function login(req, res) {
     const token = jwt.sign(
       { 
         id: usuario.id, 
-        nombre: usuario.nombre 
+        mail: usuario.mail 
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'unir-jwt-secret-key-2025',
       { expiresIn: '24h' }
     );
 
@@ -101,7 +101,7 @@ async function login(req, res) {
       token,
       usuario: {
         id: usuario.id,
-        email: usuario.nombre
+        email: usuario.mail
       }
     });
 
