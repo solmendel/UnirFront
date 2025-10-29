@@ -165,13 +165,13 @@ export function MessagesPage() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1 overflow-hidden min-h-0">
-            <div className="p-2 pb-6">
+          <ScrollArea className="flex-1 overflow-hidden min-h-0 [&>div>div]:max-w-full [&>div>div]:w-full [&>div>div]:box-border">
+            <div className="p-3 pb-6 box-border" style={{ width: '100%', maxWidth: '100%', minWidth: 0, display: 'block' }}>
               {error && (
                 <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-700">{error}</span>
+                    <span className="text-sm text-red-700 break-words">{error}</span>
                   </div>
                 </div>
               )}
@@ -179,25 +179,25 @@ export function MessagesPage() {
                 <button
                   key={conversation.id}
                   onClick={() => setSelectedConversation(conversation)}
-                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
+                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all overflow-hidden ${
                     selectedConversation?.id === conversation.id
                       ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
                       : 'hover:bg-white/80'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{conversation.participantName}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-medium truncate">{conversation.participantName}</span>
                       {conversation.unread && (
-                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
+                        <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#ec6c8c' }} />
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{conversation.time}</span>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">{conversation.time}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
                     {conversation.lastMessage}
                   </p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
+                  <div className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: platformColors[conversation.platform] }}>
                     {platformIcons[conversation.platform]}
                     <span className="capitalize">{conversation.platform}</span>
                   </div>
