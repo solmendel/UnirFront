@@ -1,45 +1,10 @@
 import { useState } from 'react';
-import {
-  Instagram,
-  Mail,
-  MessageCircle,
-  CheckCircle2,
-  XCircle,
-  Link2,
-  AlertCircle,
-} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { ScrollArea } from './ui/scroll-area';
+import { Instagram, Mail, MessageCircle, CheckCircle2, XCircle, Link2, AlertCircle } from 'lucide-react';
 
-// 🧩 Componentes base simulados (reemplazá por tus componentes reales si los tenés)
-const Card = ({ className, children }) => (
-  <div className={`rounded-xl border shadow-lg bg-white/90 ${className}`}>{children}</div>
-);
-const CardHeader = ({ className, children }) => <div className={`p-6 ${className}`}>{children}</div>;
-const CardTitle = ({ className, children }) => <h3 className={`text-xl font-semibold ${className}`}>{children}</h3>;
-const CardDescription = ({ className, children }) => <p className={`text-sm text-gray-500 ${className}`}>{children}</p>;
-const CardContent = ({ className, children }) => <div className={`p-6 pt-0 ${className}`}>{children}</div>;
-const Button = ({ className, variant, onClick, style, children }) => (
-  <button
-    className={`p-3 rounded-xl font-medium transition-all ${className} ${
-      variant === 'outline' ? 'bg-white border-2' : 'text-white'
-    }`}
-    onClick={onClick}
-    style={style}
-  >
-    {children}
-  </button>
-);
-const Badge = ({ className, variant, style, children }) => (
-  <div
-    className={`inline-flex items-center rounded-full text-xs font-semibold px-3 py-1 ${className} ${
-      variant === 'outline' ? 'border' : 'bg-gray-200'
-    }`}
-    style={style}
-  >
-    {children}
-  </div>
-);
-
-// 🧠 Tipado
 interface LinkedAccount {
   id: string;
   platform: 'whatsapp' | 'instagram' | 'gmail';
@@ -58,274 +23,241 @@ export function LinkedAccountsPage() {
       id: '1',
       platform: 'whatsapp',
       name: 'WhatsApp Business',
-      icon: <MessageCircle className="h-10 w-10 md:h-12 md:w-12" />,
+      icon: <MessageCircle className="h-12 w-12" />,
       color: '#25d366',
       connected: true,
       accountName: '+52 555 123 4567',
       connectedDate: '15 Mar 2025',
-      messagesCount: 380,
+      messagesCount: 380
     },
     {
       id: '2',
       platform: 'instagram',
       name: 'Instagram',
-      icon: <Instagram className="h-10 w-10 md:h-12 md:w-12" />,
+      icon: <Instagram className="h-12 w-12" />,
       color: '#e4405f',
       connected: true,
       accountName: '@unir_oficial',
       connectedDate: '10 Feb 2025',
-      messagesCount: 245,
+      messagesCount: 245
     },
     {
       id: '3',
       platform: 'gmail',
       name: 'Gmail',
-      icon: <Mail className="h-10 w-10 md:h-12 md:w-12" />,
+      icon: <Mail className="h-12 w-12" />,
       color: '#ea4335',
       connected: false,
-      messagesCount: 0,
+      messagesCount: 0
     },
   ]);
 
   const handleToggleConnection = (accountId: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId
+    setAccounts(prevAccounts =>
+      prevAccounts.map(account =>
+        account.id === accountId
           ? {
-              ...acc,
-              connected: !acc.connected,
-              accountName: acc.connected
-                ? undefined
-                : acc.platform === 'gmail'
-                ? 'solju@gmail.com'
-                : 'Cuenta conectada',
-              connectedDate: acc.connected
-                ? undefined
-                : new Date().toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  }),
+              ...account,
+              connected: !account.connected,
+              accountName: account.connected ? undefined : 'Cuenta conectada',
+              connectedDate: account.connected ? undefined : new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
             }
-          : acc
+          : account
       )
     );
   };
 
-  const connectedCount = accounts.filter((a) => a.connected).length;
+  const connectedCount = accounts.filter(a => a.connected).length;
   const totalMessages = accounts.reduce((sum, a) => sum + (a.messagesCount || 0), 0);
 
   return (
-    // 🔹 Contenedor principal con scroll interno
-    <div className="h-[calc(100vh-0px)] overflow-y-auto scroll-smooth bg-gradient-to-br from-pink-50/30 to-green-50/30 font-sans">
-      {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4 sticky top-0 z-10">
-        <h2 className="text-2xl font-semibold">Cuentas vinculadas</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Conecta y administra tus plataformas de mensajería para una gestión centralizada.
-        </p>
+    <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
+      <div className="border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4 flex-shrink-0">
+        <div>
+          <h2>Cuentas Vinculadas</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Conecta y administra tus plataformas de mensajería
+          </p>
+        </div>
       </div>
 
-      {/* Contenido principal */}
-      <div className="flex-1 px-4 md:px-8 py-12 space-y-20 max-w-7xl mx-auto">
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Plataformas Conectadas</p>
-                <h3 className="mt-2 text-3xl font-bold text-gray-800">
-                  {connectedCount} / {accounts.length}
-                </h3>
-              </div>
-              <div className="p-4 rounded-xl shadow-md" style={{ backgroundColor: '#acce6020' }}>
-                <Link2 className="h-7 w-7" style={{ color: '#5cb85c' }} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Mensajes Totales</p>
-                <h3 className="mt-2 text-3xl font-bold text-gray-800">
-                  {totalMessages.toLocaleString('es-ES')}
-                </h3>
-              </div>
-              <div className="p-4 rounded-xl shadow-md" style={{ backgroundColor: '#ec6c8c20' }}>
-                <MessageCircle className="h-7 w-7" style={{ color: '#ff6699' }} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Estado General</p>
-                <h3 className="mt-2 text-3xl font-bold text-gray-800">
-                  {connectedCount === accounts.length ? 'Óptimo' : 'Revisar'}
-                </h3>
-              </div>
-              <div className="p-4 rounded-xl shadow-md" style={{ backgroundColor: '#6366f120' }}>
-                {connectedCount === accounts.length ? (
-                  <CheckCircle2 className="h-7 w-7" style={{ color: '#6366f1' }} />
-                ) : (
-                  <AlertCircle className="h-7 w-7" style={{ color: '#f59e0b' }} />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Plataformas conectadas */}
-        <section className="space-y-10">
-          <h3 className="text-2xl font-bold text-gray-700">Plataformas de mensajería</h3>
-          <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
-            {accounts.map((account) => (
-              <Card
-                key={account.id}
-                className="shadow-lg border-2 border-gray-100 hover:border-gray-200 transition-all rounded-3xl"
-              >
-                <div
-                  className="h-3 rounded-t-3xl"
-                  style={{ backgroundColor: account.connected ? account.color : '#e5e7eb' }}
-                />
-                <CardHeader className="text-center pt-8 pb-4">
-                  <div
-                    className="mx-auto mb-4 p-5 rounded-3xl"
-                    style={{ backgroundColor: `${account.color}15`, width: 'fit-content' }}
-                  >
-                    <div style={{ color: account.color }}>{account.icon}</div>
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 md:p-6">
+          <div className="max-w-6xl mx-auto space-y-6 pb-6">
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Plataformas Conectadas</p>
+                    <h3 className="mt-2">{connectedCount} de {accounts.length}</h3>
                   </div>
-                  <CardTitle className="text-2xl text-gray-800">{account.name}</CardTitle>
+                  <div className="p-3 rounded-xl" style={{ backgroundColor: '#acce6020' }}>
+                    <Link2 className="h-6 w-6" style={{ color: '#acce60' }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Mensajes Totales</p>
+                    <h3 className="mt-2">{totalMessages}</h3>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ backgroundColor: '#ec6c8c20' }}>
+                    <MessageCircle className="h-6 w-6" style={{ color: '#ec6c8c' }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Estado General</p>
+                    <h3 className="mt-2">
+                      {connectedCount === accounts.length ? 'Completo' : 'Parcial'}
+                    </h3>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ backgroundColor: '#6366f120' }}>
+                    {connectedCount === accounts.length ? (
+                      <CheckCircle2 className="h-6 w-6" style={{ color: '#6366f1' }} />
+                    ) : (
+                      <AlertCircle className="h-6 w-6" style={{ color: '#f59e0b' }} />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Plataformas */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {accounts.map((account) => (
+              <Card key={account.id} className="border-none shadow-sm bg-white/80 backdrop-blur-sm overflow-hidden">
+                <div 
+                  className="h-2" 
+                  style={{ backgroundColor: account.connected ? account.color : '#d1d5db' }}
+                />
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto mb-4 p-4 rounded-2xl" style={{ backgroundColor: `${account.color}15` }}>
+                    <div style={{ color: account.color }}>
+                      {account.icon}
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">{account.name}</CardTitle>
                   <CardDescription>
                     {account.connected ? account.accountName : 'No conectado'}
                   </CardDescription>
                 </CardHeader>
-
-                <CardContent className="space-y-6 px-6 pb-6">
+                <CardContent className="space-y-4">
+                  {/* Estado */}
                   <div className="flex items-center justify-center">
-                    <Badge
-                      variant="outline"
-                      className="rounded-full gap-2 px-5 py-2 font-bold text-sm"
-                      style={{
-                        borderColor: account.connected ? account.color : '#ef4444',
-                        color: account.connected ? account.color : '#ef4444',
-                        backgroundColor: account.connected ? `${account.color}10` : '#fef2f2',
+                    <Badge 
+                      variant="outline" 
+                      className="rounded-full gap-2 px-4 py-1"
+                      style={{ 
+                        borderColor: account.connected ? '#acce60' : '#ef4444',
+                        color: account.connected ? '#acce60' : '#ef4444'
                       }}
                     >
                       {account.connected ? (
                         <>
                           <CheckCircle2 className="h-4 w-4" />
-                          Activo
+                          Conectado
                         </>
                       ) : (
                         <>
                           <XCircle className="h-4 w-4" />
-                          Inactivo
+                          Desconectado
                         </>
                       )}
                     </Badge>
                   </div>
 
+                  {/* Información adicional */}
                   {account.connected && (
-                    <div className="space-y-3 p-4 rounded-2xl bg-gray-50 border border-gray-200">
+                    <div className="space-y-2 p-4 rounded-xl bg-gradient-to-br from-pink-50/50 to-green-50/50">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 font-medium">Conectado desde:</span>
-                        <span className="font-semibold text-gray-700">{account.connectedDate}</span>
+                        <span className="text-muted-foreground">Conectado desde:</span>
+                        <span>{account.connectedDate}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 font-medium">Mensajes procesados:</span>
-                        <span className="font-semibold" style={{ color: account.color }}>
-                          {account.messagesCount?.toLocaleString('es-ES')}
-                        </span>
+                        <span className="text-muted-foreground">Mensajes procesados:</span>
+                        <span style={{ color: account.color }}>{account.messagesCount}</span>
                       </div>
                     </div>
                   )}
 
+                  {/* Botón de acción */}
                   <Button
-                    className={`w-full rounded-2xl text-lg font-bold shadow-md ${
-                      account.connected ? 'hover:bg-gray-100' : 'hover:opacity-90 transition-opacity'
-                    }`}
+                    className="w-full rounded-xl"
                     variant={account.connected ? 'outline' : 'default'}
-                    style={
-                      !account.connected
-                        ? { backgroundColor: account.color }
-                        : { borderColor: account.color, color: account.color, borderWidth: '2px' }
-                    }
+                    style={!account.connected ? { backgroundColor: account.color } : { borderColor: account.color, color: account.color }}
                     onClick={() => handleToggleConnection(account.id)}
                   >
-                    {account.connected ? 'Desconectar' : 'Vincular ahora'}
+                    {account.connected ? 'Desconectar' : 'Conectar'}
                   </Button>
 
+                  {/* Información de ayuda */}
                   {!account.connected && (
-                    <p className="text-xs text-center text-gray-500 pt-1">
-                      Conecta tu cuenta para empezar a gestionar.
+                    <p className="text-xs text-center text-muted-foreground">
+                      Conecta tu cuenta para centralizar tus mensajes
                     </p>
                   )}
                 </CardContent>
               </Card>
             ))}
           </div>
-        </section>
 
-        {/* Pasos finales */}
-        <section className="pb-20">
-          <Card className="shadow-lg border-none bg-white/90">
+          {/* Información adicional */}
+          <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-2xl text-gray-800">¿Cómo funciona la conexión?</CardTitle>
+              <CardTitle>¿Cómo funciona la conexión?</CardTitle>
               <CardDescription>
-                Pasos sencillos para vincular tus plataformas a UNIR
+                Pasos para vincular tus plataformas a UNIR
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <div className="text-center p-6 border rounded-2xl bg-gray-50/50 shadow-inner">
-                  <div
-                    className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto font-bold text-xl text-white"
-                    style={{ backgroundColor: '#ec6c8c' }}
-                  >
-                    1
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: '#ec6c8c20' }}>
+                    <span className="text-xl" style={{ color: '#ec6c8c' }}>1</span>
                   </div>
-                  <h4 className="mb-2 text-lg font-semibold text-gray-800">
-                    Selecciona la plataforma
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    Elige WhatsApp, Instagram o Gmail para unificar tus mensajes en un solo lugar.
+                  <h4 className="mb-2">Selecciona la plataforma</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Elige WhatsApp, Instagram o Gmail según tus necesidades
                   </p>
                 </div>
 
-                <div className="text-center p-6 border rounded-2xl bg-gray-50/50 shadow-inner">
-                  <div
-                    className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto font-bold text-xl text-white"
-                    style={{ backgroundColor: '#acce60' }}
-                  >
-                    2
+                <div className="text-center p-4">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: '#acce6020' }}>
+                    <span className="text-xl" style={{ color: '#acce60' }}>2</span>
                   </div>
-                  <h4 className="mb-2 text-lg font-semibold text-gray-800">Autoriza el acceso</h4>
-                  <p className="text-sm text-gray-500">
-                    Inicia sesión y concede permisos para conectar tus cuentas de forma segura.
+                  <h4 className="mb-2">Autoriza la conexión</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Inicia sesión y otorga los permisos necesarios de forma segura
                   </p>
                 </div>
 
-                <div className="text-center p-6 border rounded-2xl bg-gray-50/50 shadow-inner">
-                  <div
-                    className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto font-bold text-xl text-white"
-                    style={{ backgroundColor: '#6366f1' }}
-                  >
-                    3
+                <div className="text-center p-4">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: '#6366f120' }}>
+                    <span className="text-xl" style={{ color: '#6366f1' }}>3</span>
                   </div>
-                  <h4 className="mb-2 text-lg font-semibold text-gray-800">
-                    Comienza a gestionar
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    Tus mensajes aparecerán automáticamente en el panel unificado de UNIR.
+                  <h4 className="mb-2">Comienza a gestionar</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Tus mensajes aparecerán automáticamente en el panel unificado
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </section>
+          </div>
+        </div>
       </div>
     </div>
   );
