@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
+import { RegisterPage } from './components/RegisterPage';
 import { MessagesPage } from './components/MessagesPage';
 import { HistoryPage } from './components/HistoryPage';
 import { CollaboratorsPage } from './components/CollaboratorsPage';
@@ -9,14 +10,16 @@ import { MessageSquare, History, Users, BarChart3, LogOut, Link2 } from 'lucide-
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
-
+import { authService } from './services/authService';
 
 // 🧩 1️⃣ Agregamos 'linkedAccounts' al tipo de página
 type Page = 'messages' | 'history' | 'collaborators' | 'metrics' | 'linkedAccounts';
+type AuthPage = 'login' | 'register';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('messages');
+  const [authPage, setAuthPage] = useState<AuthPage>('login');
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<{ email: string; name: string } | null>(null);
 
@@ -24,21 +27,13 @@ export default function App() {
   useEffect(() => {
     const checkSession = () => {
       try {
-        const sessionData = localStorage.getItem('unir-session');
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
-          // Check if session is still valid (not expired)
-          if (session.expiresAt && new Date().getTime() < session.expiresAt) {
-            setIsLoggedIn(true);
-            setUserData(session.user);
-          } else {
-            // Session expired, clear it
-            localStorage.removeItem('unir-session');
-          }
+        const session = authService.getCurrentSession();
+        if (session) {
+          setIsLoggedIn(true);
+          setUserData(session.user);
         }
       } catch (error) {
         console.error('Error checking session:', error);
-        localStorage.removeItem('unir-session');
       } finally {
         setIsLoading(false);
       }
@@ -48,22 +43,27 @@ export default function App() {
   }, []);
 
   const handleLogin = (userData?: { email: string; name: string }) => {
-    const sessionData = {
-      isLoggedIn: true,
-      user: userData || { email: 'admin@unir.com', name: 'Admin Usuario' },
-      loginTime: new Date().getTime(),
-      expiresAt: new Date().getTime() + (24 * 60 * 60 * 1000) // 24 hours
-    };
-
-    localStorage.setItem('unir-session', JSON.stringify(sessionData));
     setIsLoggedIn(true);
-    setUserData(sessionData.user);
+    setUserData(userData || { email: 'admin@unir.com', name: 'Admin Usuario' });
+  };
+
+  const handleRegister = (userData: { email: string; name: string }) => {
+    setIsLoggedIn(true);
+    setUserData(userData);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('unir-session');
+    authService.logout();
     setIsLoggedIn(false);
     setUserData(null);
+  };
+
+  const showRegister = () => {
+    setAuthPage('register');
+  };
+
+  const showLogin = () => {
+    setAuthPage('login');
   };
 
   // Show loading state while checking session
@@ -76,7 +76,10 @@ export default function App() {
   }
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={handleLogin} />;
+    if (authPage === 'register') {
+      return <RegisterPage onRegister={handleRegister} onBackToLogin={showLogin} />;
+    }
+    return <LoginPage onLogin={handleLogin} onShowRegister={showRegister} />;
   }
 
   // 🧭 2️⃣ Agregamos la opción "Cuentas Vinculadas" al menú lateral
