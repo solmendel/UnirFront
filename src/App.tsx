@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import { MessagesPage } from './components/MessagesPage';
 import { HistoryPage } from './components/HistoryPage';
 import { CollaboratorsPage } from './components/CollaboratorsPage';
 import { MetricsPage } from './components/MetricsPage';
-import { MessageSquare, History, Users, BarChart3, LogOut } from 'lucide-react';
+import { LinkedAccountsPage } from './components/LinkedAccountsPage';
+import { MessageSquare, History, Users, BarChart3, LogOut, Link2 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
 
-type Page = 'messages' | 'history' | 'collaborators' | 'metrics';
+
+// 🧩 1️⃣ Agregamos 'linkedAccounts' al tipo de página
+type Page = 'messages' | 'history' | 'collaborators' | 'metrics' | 'linkedAccounts';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -51,7 +54,7 @@ export default function App() {
       loginTime: new Date().getTime(),
       expiresAt: new Date().getTime() + (24 * 60 * 60 * 1000) // 24 hours
     };
-    
+
     localStorage.setItem('unir-session', JSON.stringify(sessionData));
     setIsLoggedIn(true);
     setUserData(sessionData.user);
@@ -76,17 +79,22 @@ export default function App() {
     return <LoginPage onLogin={handleLogin} />;
   }
 
+  // 🧭 2️⃣ Agregamos la opción "Cuentas Vinculadas" al menú lateral
   const navigation = [
     { id: 'messages' as Page, label: 'Mensajes', icon: MessageSquare, color: '#ec6c8c' },
-    { id: 'metrics' as Page, label: 'Métricas', icon: BarChart3, color: '#acce60' },
+    { id: 'linkedAccounts' as Page, label: 'Cuentas vinculadas', icon: Link2, color: '#acce60' },
+    { id: 'metrics' as Page, label: 'Métricas', icon: BarChart3, color: '#8b5cf6' },
     { id: 'history' as Page, label: 'Historial', icon: History, color: '#6366f1' },
     { id: 'collaborators' as Page, label: 'Colaboradores', icon: Users, color: '#f59e0b' },
   ];
 
+  // 🧠 3️⃣ Renderizamos la página nueva
   const renderPage = () => {
     switch (currentPage) {
       case 'messages':
         return <MessagesPage />;
+      case 'linkedAccounts':
+        return <LinkedAccountsPage />;
       case 'history':
         return <HistoryPage />;
       case 'collaborators':
@@ -98,7 +106,7 @@ export default function App() {
     }
   };
 
-  return (
+   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
       {/* Sidebar */}
       <div className="w-64 border-r bg-gradient-to-b from-pink-50/50 to-green-50/50 flex flex-col">
@@ -120,9 +128,7 @@ export default function App() {
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-white shadow-sm'
-                    : 'hover:bg-white/50'
+                  isActive ? 'bg-white shadow-sm' : 'hover:bg-white/50'
                 }`}
               >
                 <div
@@ -152,7 +158,7 @@ export default function App() {
         {/* User section */}
         <div className="p-4 border-t bg-white/30">
           <div className="flex items-center gap-3 px-4 py-3 mb-2">
-            <div 
+            <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-white"
               style={{ backgroundColor: '#ec6c8c' }}
             >
@@ -160,7 +166,9 @@ export default function App() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm truncate">{userData?.name || 'Usuario'}</p>
-              <p className="text-xs text-muted-foreground truncate">{userData?.email || 'user@example.com'}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {userData?.email || 'user@example.com'}
+              </p>
             </div>
           </div>
           <Button
@@ -175,8 +183,8 @@ export default function App() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto">
-        {renderPage()}
+      <div className="flex-1 overflow-y-auto w-full h-full bg-white">
+        <div className="min-h-screen w-full">{renderPage()}</div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -6,29 +6,19 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
-import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { Label } from './ui/label';
+import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { useMessages } from '../hooks/useMessages';
-import { Conversation, ChatMessage } from '../types/api';
-
-const templates = [
-  { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
-  { id: '2', name: 'Consulta de producto', content: 'Gracias por tu interés en nuestros productos. Te proporcionaré toda la información que necesites.' },
-  { id: '3', name: 'Estado de pedido', content: 'Voy a revisar el estado de tu pedido y te informo en breve.' },
-  { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
-];
-
-// No mock data - all data comes from the backend API
+import { Conversation } from '../types/api';
 
 export function MessagesPage() {
-  // Use the useMessages hook to get data from the API
   const {
     conversations,
     selectedConversation,
     setSelectedConversation,
     isLoading,
     error,
-    loadConversations,
-    loadConversation,
     sendMessage,
     markMessageAsRead,
     isConnected
@@ -38,6 +28,73 @@ export function MessagesPage() {
   const [reply, setReply] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 👉 Estado de plantillas
+  const [templates, setTemplates] = useState([
+    { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
+    { id: '2', name: 'Consulta de producto', content: 'Gracias por tu interés en nuestros productos. Te proporcionaré toda la información que necesites.' },
+    { id: '3', name: 'Estado de pedido', content: 'Voy a revisar el estado de tu pedido y te informo en breve.' },
+    { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
+  ]);
+
+  // 👉 Modal para nueva plantilla
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateContent, setNewTemplateContent] = useState('');
+
+  const handleTemplateSelect = (templateContent: string) => {
+    setReply(templateContent);
+  };
+
+  const handleSendMessage = async () => {
+    if (!reply.trim() || !selectedConversation) return;
+    setIsSending(true);
+    try {
+      await sendMessage(selectedConversation.id, reply);
+      setReply('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleCreateTemplate = () => {
+    if (!newTemplateName.trim() || !newTemplateContent.trim()) return;
+    const newTemplate = {
+      id: Date.now().toString(),
+      name: newTemplateName,
+      content: newTemplateContent,
+    };
+    setTemplates([...templates, newTemplate]);
+    setNewTemplateName('');
+    setNewTemplateContent('');
+    setIsDialogOpen(false);
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    setTemplates(templates.filter(t => t.id !== id));
+  };
+
+  useEffect(() => {
+    if (selectedConversation && selectedConversation.conversation.length > 0) {
+      const unreadMessages = selectedConversation.conversation.filter(
+        msg => msg.sender === 'user' && !msg.isRead
+      );
+      unreadMessages.forEach(msg => {
+        if (msg.messageId) markMessageAsRead(msg.messageId);
+      });
+    }
+  }, [selectedConversation, markMessageAsRead]);
+
+  // Auto scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [selectedConversation?.conversation]);
 
   const platformIcons = {
     instagram: <Instagram className="h-4 w-4" />,
@@ -63,39 +120,6 @@ export function MessagesPage() {
       );
     });
 
-  const handleTemplateSelect = (templateContent: string) => {
-    setReply(templateContent);
-  };
-
-  const handleSendMessage = async () => {
-    if (!reply.trim() || !selectedConversation) return;
-
-    setIsSending(true);
-    try {
-      await sendMessage(selectedConversation.id, reply);
-      setReply('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  // Mark messages as read when conversation is selected
-  useEffect(() => {
-    if (selectedConversation && selectedConversation.conversation.length > 0) {
-      const unreadMessages = selectedConversation.conversation
-        .filter(msg => msg.sender === 'user' && !msg.isRead);
-      
-      // Mark all unread messages as read
-      unreadMessages.forEach(msg => {
-        if (msg.messageId) {
-          markMessageAsRead(msg.messageId);
-        }
-      });
-    }
-  }, [selectedConversation, markMessageAsRead]);
-
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -109,6 +133,7 @@ export function MessagesPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
+      {/* Header */}
       <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
@@ -123,49 +148,11 @@ export function MessagesPage() {
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              onClick={() => setFilter('all')}
-              className="rounded-xl"
-              style={filter === 'all' ? { backgroundColor: '#ec6c8c' } : {}}
-            >
-              Todos
-            </Button>
-            <Button
-              variant={filter === 'instagram' ? 'default' : 'outline'}
-              onClick={() => setFilter('instagram')}
-              className="rounded-xl"
-              style={filter === 'instagram' ? { backgroundColor: '#e4405f' } : {}}
-            >
-              <Instagram className="h-4 w-4 mr-2" />
-              Instagram
-            </Button>
-            <Button
-              variant={filter === 'whatsapp' ? 'default' : 'outline'}
-              onClick={() => setFilter('whatsapp')}
-              className="rounded-xl"
-              style={filter === 'whatsapp' ? { backgroundColor: '#25d366' } : {}}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp
-            </Button>
-            <Button
-              variant={filter === 'gmail' ? 'default' : 'outline'}
-              onClick={() => setFilter('gmail')}
-              className="rounded-xl"
-              style={filter === 'gmail' ? { backgroundColor: '#ea4335' } : {}}
-            >
-              <Mail className="h-4 w-4 mr-2" />
-              Gmail
-            </Button>
-          </div>
         </div>
-        
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Lista de mensajes */}
+        {/* Sidebar */}
         <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col">
           <div className="p-4 border-b flex-shrink-0">
             <div className="relative">
@@ -178,7 +165,7 @@ export function MessagesPage() {
               />
             </div>
           </div>
-          
+
           <ScrollArea className="flex-1">
             <div className="p-2 pb-6">
               {error && (
@@ -189,127 +176,130 @@ export function MessagesPage() {
                   </div>
                 </div>
               )}
-              
-              <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-blue-700">
-                    Modo demo activo - Los datos son de ejemplo. Configura el backend para conectar con WhatsApp real.
-                  </span>
-                </div>
-              </div>
-              
-              {filteredConversations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No hay conversaciones que coincidan con el filtro</p>
-                  <p className="text-sm mt-2">Prueba cambiar el filtro o la búsqueda</p>
-                </div>
-              ) : (
-                filteredConversations.map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
-                    className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
-                      selectedConversation?.id === conversation.id
-                        ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
-                        : 'hover:bg-white/80'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{conversation.participantName}</span>
-                        {conversation.unread && (
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground">{conversation.time}</span>
+              {filteredConversations.map((conversation) => (
+                <button
+                  key={conversation.id}
+                  onClick={() => setSelectedConversation(conversation)}
+                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
+                    selectedConversation?.id === conversation.id
+                      ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
+                      : 'hover:bg-white/80'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{conversation.participantName}</span>
+                      {conversation.unread && (
+                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                      {conversation.lastMessage}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
-                      {platformIcons[conversation.platform]}
-                      <span className="capitalize">{conversation.platform}</span>
-                    </div>
-                  </button>
-                ))
-              )}
+                    <span className="text-xs text-muted-foreground">{conversation.time}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                    {conversation.lastMessage}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
+                    {platformIcons[conversation.platform]}
+                    <span className="capitalize">{conversation.platform}</span>
+                  </div>
+                </button>
+              ))}
             </div>
           </ScrollArea>
         </div>
 
-        {/* Vista de conversación */}
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Chat View */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {selectedConversation ? (
             <>
               <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3>{selectedConversation.participantName}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
-                        {platformIcons[selectedConversation.platform]}
-                        <span className="ml-1 capitalize">{selectedConversation.platform}</span>
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {selectedConversation.participantIdentifier}
-                      </span>
-                    </div>
-                  </div>
+                <h3>{selectedConversation.participantName}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
+                    {platformIcons[selectedConversation.platform]}
+                    <span className="ml-1 capitalize">{selectedConversation.platform}</span>
+                  </Badge>
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-6">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-4 max-w-3xl pb-6">
                   {selectedConversation.conversation.map((chat) => (
                     <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''}`} style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
+                          chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''
+                        }`}
+                        style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}
+                      >
                         {chat.sender === 'me' ? 'Yo' : selectedConversation.participantName.charAt(0)}
                       </div>
                       <div className="flex-1 max-w-lg">
-                        <div className={`rounded-2xl p-4 shadow-sm ${chat.sender === 'me' ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm' : 'bg-white rounded-tl-sm'}`}>
+                        <div
+                          className={`rounded-2xl p-4 shadow-sm ${
+                            chat.sender === 'me'
+                              ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm'
+                              : 'bg-white rounded-tl-sm'
+                          }`}
+                        >
                           <p>{chat.text}</p>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 ml-1">
-                          <span className="text-xs text-muted-foreground">{chat.time}</span>
-                          {!chat.isRead && chat.sender === 'user' && (
-                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          )}
-                        </div>
+                        <span className="text-xs text-muted-foreground mt-1 ml-1 block">{chat.time}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
 
+              {/* Área de plantillas + entrada */}
               <div className="border-t bg-white/80 backdrop-blur-sm p-6 flex-shrink-0">
-                <div className="max-w-3xl space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Plantilla:</span>
-                    <Select onValueChange={(value) => {
-                      const template = templates.find(t => t.id === value);
-                      if (template) handleTemplateSelect(template.content);
-                    }}>
-                      <SelectTrigger className="w-64 rounded-xl">
-                        <SelectValue placeholder="Seleccionar plantilla" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="max-w-3xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Plantilla:</span>
+                      <Select onValueChange={(value) => {
+                        const template = templates.find(t => t.id === value);
+                        if (template) handleTemplateSelect(template.content);
+                      }}>
+                        <SelectTrigger className="w-64 rounded-xl">
+                          <SelectValue placeholder="Seleccionar plantilla" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates.map((template) => (
+                            <div key={template.id} className="flex items-center justify-between">
+                              <SelectItem value={template.id}>{template.name}</SelectItem>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-red-500 hover:bg-red-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTemplate(template.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={() => setIsDialogOpen(true)}
+                      variant="outline"
+                      className="rounded-xl flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" /> Nuevo
+                    </Button>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="flex gap-2 items-end">
                     <Textarea
                       placeholder="Escribe tu respuesta..."
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
-                      className="rounded-xl resize-none"
-                      rows={3}
+                      className="rounded-xl resize-none flex-1 min-h-[90px] text-base"
+                      rows={4}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -318,8 +308,8 @@ export function MessagesPage() {
                       }}
                       disabled={isSending}
                     />
-                    <Button 
-                      className="rounded-xl h-auto" 
+                    <Button
+                      className="rounded-xl h-auto px-4 py-6"
                       style={{ backgroundColor: '#acce60' }}
                       onClick={handleSendMessage}
                       disabled={!reply.trim() || isSending}
@@ -327,7 +317,7 @@ export function MessagesPage() {
                       {isSending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Send className="h-4 w-4" />
+                        <Send className="h-5 w-5" />
                       )}
                     </Button>
                   </div>
@@ -339,12 +329,54 @@ export function MessagesPage() {
               <div className="text-center">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-20" />
                 <p>Selecciona una conversación para ver los mensajes</p>
-                <p className="text-sm mt-2">Puedes responder usando las plantillas o escribiendo tu propio mensaje</p>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Dialog de nueva plantilla */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Crear nueva plantilla</DialogTitle>
+            <DialogDescription>
+              Define un nombre y un mensaje predeterminado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nombre de la plantilla</Label>
+              <Input
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                placeholder="Ej: Respuesta de envío"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mensaje</Label>
+              <Textarea
+                value={newTemplateContent}
+                onChange={(e) => setNewTemplateContent(e.target.value)}
+                placeholder="Escribe el mensaje predeterminado..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateTemplate}
+              style={{ backgroundColor: '#ec6c8c' }}
+              disabled={!newTemplateName.trim() || !newTemplateContent.trim()}
+            >
+              Crear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🔹 Base global */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -37,12 +38,12 @@
     font-family: 'Montserrat', sans-serif;
   }
 
-  html, body {
-  min-height: 100%;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  html,
+  body {
+    min-height: 100%;
+    overflow-y: auto;
+    scroll-behavior: smooth;
   }
-
 
   h1 {
     font-size: 2.5rem;
@@ -84,5 +85,27 @@
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.6;
+  }
+}
+
+/* 🔹 Utilidades personalizadas */
+@layer utilities {
+  /* Scroll suave y horizontal seguro */
+  .responsive-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Wrap seguro para contenedores flex */
+  .flex-wrap-safe {
+    flex-wrap: wrap !important;
+  }
+
+  /* Contenedor que se adapta al viewport */
+  .scrollable-content {
+    min-height: 0;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
   }
 }
