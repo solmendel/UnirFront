@@ -155,30 +155,30 @@ export function LinkedAccountsPage() {
           </div>
 
           {/* Plataformas */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="flex gap-4 overflow-x-auto justify-center">
             {accounts.map((account) => (
-              <Card key={account.id} className="border-none shadow-sm bg-white/80 backdrop-blur-sm overflow-hidden">
+              <Card key={account.id} className="border-none shadow-sm bg-white/80 backdrop-blur-sm overflow-hidden min-w-[280px] flex-shrink-0">
                 <div 
                   className="h-2" 
                   style={{ backgroundColor: account.connected ? account.color : '#d1d5db' }}
                 />
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 p-4 rounded-2xl" style={{ backgroundColor: `${account.color}15` }}>
-                    <div style={{ color: account.color }}>
+                <CardHeader className="text-center pb-3">
+                  <div className="mx-auto mb-3 p-3 rounded-xl" style={{ backgroundColor: `${account.color}15` }}>
+                    <div style={{ color: account.color }} className="scale-90">
                       {account.icon}
                     </div>
                   </div>
-                  <CardTitle className="text-xl">{account.name}</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg">{account.name}</CardTitle>
+                  <CardDescription className="text-xs">
                     {account.connected ? account.accountName : 'No conectado'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   {/* Estado */}
                   <div className="flex items-center justify-center">
                     <Badge 
                       variant="outline" 
-                      className="rounded-full gap-2 px-4 py-1"
+                      className="rounded-full gap-1.5 px-3 py-0.5"
                       style={{ 
                         borderColor: account.connected ? '#acce60' : '#ef4444',
                         color: account.connected ? '#acce60' : '#ef4444'
@@ -186,12 +186,12 @@ export function LinkedAccountsPage() {
                     >
                       {account.connected ? (
                         <>
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-3 w-3" />
                           Conectado
                         </>
                       ) : (
                         <>
-                          <XCircle className="h-4 w-4" />
+                          <XCircle className="h-3 w-3" />
                           Desconectado
                         </>
                       )}
@@ -199,35 +199,34 @@ export function LinkedAccountsPage() {
                   </div>
 
                   {/* Información adicional */}
-                  {account.connected && (
-                    <div className="space-y-2 p-4 rounded-xl bg-gradient-to-br from-pink-50/50 to-green-50/50">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Conectado desde:</span>
-                        <span>{account.connectedDate}</span>
+                  <div className="min-h-[4rem]">
+                    {account.connected ? (
+                      <div className="space-y-1.5 p-3 rounded-xl bg-gradient-to-br from-pink-50/50 to-green-50/50">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Conectado desde:</span>
+                          <span>{account.connectedDate}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Mensajes procesados:</span>
+                          <span style={{ color: account.color }}>{account.messagesCount}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Mensajes procesados:</span>
-                        <span style={{ color: account.color }}>{account.messagesCount}</span>
-                      </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-xs text-center text-muted-foreground pt-2">
+                        Conecta tu cuenta para centralizar tus mensajes
+                      </p>
+                    )}
+                  </div>
 
                   {/* Botón de acción */}
                   <Button
-                    className="w-full rounded-xl"
+                    className="w-full rounded-xl text-sm py-2"
                     variant={account.connected ? 'outline' : 'default'}
                     style={!account.connected ? { backgroundColor: account.color } : { borderColor: account.color, color: account.color }}
                     onClick={() => handleToggleConnection(account.id)}
                   >
                     {account.connected ? 'Desconectar' : 'Conectar'}
                   </Button>
-
-                  {/* Información de ayuda */}
-                  {!account.connected && (
-                    <p className="text-xs text-center text-muted-foreground">
-                      Conecta tu cuenta para centralizar tus mensajes
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             ))}
