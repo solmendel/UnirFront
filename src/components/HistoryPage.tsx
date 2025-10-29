@@ -139,7 +139,6 @@ export function HistoryPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
-      {/* 🔹 Header */}
       <div className="border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -162,7 +161,6 @@ export function HistoryPage() {
         </div>
       </div>
 
-      {/* 🔹 Contenido principal */}
       <ScrollArea className="flex-1 p-4 md:p-6">
         <div className="max-w-7xl mx-auto space-y-6 pb-6">
           {/* Filtros */}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Instagram, Mail, MessageCircle, CheckCircle2, XCircle, Link2, AlertCircle } from 'lucide-react';
+import { Instagram, Mail, MessageCircle, CheckCircle2, XCircle, Link2, AlertCircle, Award } from 'lucide-react';
 
 interface LinkedAccount {
   id: string;
@@ -72,7 +72,8 @@ export function LinkedAccountsPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
-      <div className="border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4 flex-shrink-0">
+      {/* Fixed header */}
+      <div className="fixed top-0 left-0 right-0 w-full z-50 border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4">
         <div>
           <h2>Cuentas Vinculadas</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -81,9 +82,27 @@ export function LinkedAccountsPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 md:p-6">
+      {/* Contenedor con padding-top para compensar el header */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full p-4 md:p-6">
           <div className="max-w-6xl mx-auto space-y-6 pb-6">
+          {/* Card invisible para compensar el header fijo */}
+          <div className="pt-32" style={{ minHeight: 'auto' }}>
+            <div className="border-none shadow-sm bg-white/80 backdrop-blur-sm" style={{ minHeight: 'auto', opacity: 0, pointerEvents: 'none' }}>
+              <div className="p-3" style={{ padding: '0.75rem', minHeight: 'auto' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Card de Prueba</p>
+                    <h3 className="mt-1">999</h3>
+                  </div>
+                  <div className="p-2 rounded-xl" style={{ backgroundColor: '#f59e0b20' }}>
+                    <div className="h-5 w-5"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Estadísticas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
@@ -257,7 +276,7 @@ export function LinkedAccountsPage() {
             </CardContent>
           </Card>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     </div>
   );

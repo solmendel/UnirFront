@@ -335,6 +335,48 @@
       "external_message_id": null,
       "is_read": false,
       "created_at": "2025-10-29T00:35:53.805Z"
+    },
+    {
+      "id": 16,
+      "content": "ggg",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-29T03:45:16.790Z",
+      "message_metadata": null,
+      "conversation_id": 3,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-29T03:45:16.853Z"
+    },
+    {
+      "id": 17,
+      "content": "fff",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-29T03:46:03.102Z",
+      "message_metadata": null,
+      "conversation_id": 3,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-29T03:46:03.139Z"
+    },
+    {
+      "id": 18,
+      "content": "f",
+      "message_type": "text",
+      "direction": "outgoing",
+      "sender_name": null,
+      "sender_identifier": "admin",
+      "timestamp": "2025-10-29T03:47:35.017Z",
+      "message_metadata": null,
+      "conversation_id": 1,
+      "external_message_id": null,
+      "is_read": false,
+      "created_at": "2025-10-29T03:47:35.026Z"
     }
   ],
   "conversations": [
@@ -389,6 +431,6 @@
       "updated_at": "2025-10-25T11:13:56.906Z"
     }
   ],
-  "messageCounter": 16,
+  "messageCounter": 19,
   "conversationCounter": 1
 }

@@ -157,7 +157,8 @@ export function CollaboratorsPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
-      <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
+      {/* Fixed header */}
+      <div className="fixed top-0 left-0 right-0 w-full z-50 border-b bg-white/80 backdrop-blur-sm px-6 py-4">
         <div>
           <h2>Colaboradores</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -166,10 +167,29 @@ export function CollaboratorsPage() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto space-y-6 pb-6">
+      {/* Contenedor con padding-top para compensar el header */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full p-6">
+          <div className="max-w-6xl mx-auto space-y-6 pb-6">
+          {/* Card de Prueba - Separada (invisible para spacing) */}
+          <div className="pt-32" style={{ minHeight: 'auto' }}>
+            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm" style={{ minHeight: 'auto', opacity: 0, pointerEvents: 'none' }}>
+              <CardContent className="p-2" style={{ padding: '0.5rem', minHeight: 'auto' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Card de Prueba</p>
+                    <h3 className="mt-1">999</h3>
+                  </div>
+                  <div className="p-2 rounded-xl" style={{ backgroundColor: '#f59e0b20' }}>
+                    <Award className="h-5 w-5" style={{ color: '#f59e0b' }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Estadísticas del equipo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
             <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -442,7 +462,8 @@ export function CollaboratorsPage() {
             </CardContent>
           </Card>
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {/* Dialog para editar rol */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

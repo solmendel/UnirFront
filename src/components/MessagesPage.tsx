@@ -133,7 +133,6 @@ export function MessagesPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
-      {/* Header */}
       <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
