@@ -1,28 +1,28 @@
 import { useState } from 'react';
 import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
+import { Mail, Lock, UserPlus, ArrowLeft } from 'lucide-react';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
-import { authService, LoginRequest } from '../services/authService';
+import { authService, RegisterRequest } from '../services/authService';
 
-interface LoginPageProps {
-  onLogin: (userData?: { email: string; name: string }) => void;
-  onShowRegister: () => void;
+interface RegisterPageProps {
+  onRegister: (userData: { email: string; name: string }) => void;
+  onBackToLogin: () => void;
 }
 
-export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
-  const [formData, setFormData] = useState<LoginRequest>({
+export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
+  const [formData, setFormData] = useState<RegisterRequest>({
     mail: '',
     password: ''
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,61 +37,53 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     // Validaciones básicas
     if (!formData.mail || !formData.password) {
-      setError('Email y contraseña son requeridos');
+      setError('Todos los campos son requeridos');
+      return;
+    }
+
+    if (formData.password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (formData.password.length < 3) {
+      setError('La contraseña debe tener al menos 3 caracteres');
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.mail)) {
+      setError('El formato del email no es válido');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await authService.login(formData);
+      const response = await authService.register(formData);
       
-      // Guardar sesión
-      authService.saveSession(response);
+      setSuccess('¡Usuario registrado exitosamente! Redirigiendo...');
       
-      // Extraer nombre del email
-      const name = formData.mail.split('@')[0] || 'Usuario';
-      onLogin({ email: formData.mail, name });
+      // Simular un pequeño delay para mostrar el mensaje de éxito
+      setTimeout(() => {
+        const userData = {
+          email: response.email,
+          name: response.email.split('@')[0] || 'Usuario'
+        };
+        onRegister(userData);
+      }, 1500);
 
     } catch (error: any) {
-      console.error('Error en login:', error);
-      setError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+      console.error('Error en registro:', error);
+      setError(error.message || 'Error al registrar usuario. Inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoogleSuccess = (credentialResponse: any) => {
-    try {
-      // Decode the JWT token to get user information
-      const decoded: any = jwtDecode(credentialResponse.credential);
-      
-      // Extract user data from Google response
-      const userData = {
-        email: decoded.email,
-        name: decoded.name || decoded.given_name || decoded.email.split('@')[0]
-      };
-      
-      // Fill in the form fields with Google data
-      setFormData({
-        mail: userData.email,
-        password: ''
-      });
-      
-      // Automatically log in with Google data
-      onLogin(userData);
-    } catch (error) {
-      console.error('Error decoding Google credential:', error);
-    }
-  };
-
-  const handleGoogleError = (error: any) => {
-    console.error('Google login failed:', error);
-    // You could add a toast notification here if you have a toast system
-    alert('Error al iniciar sesión con Google. Por favor, verifica que el Client ID esté configurado correctamente.');
   };
 
   return (
@@ -101,15 +93,21 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
           <div className="mx-auto">
             <img src={logo} alt="UNIR" className="h-28 mx-auto" />
           </div>
-          <CardTitle className="text-2xl">Bienvenido de nuevo</CardTitle>
+          <CardTitle className="text-2xl">Crear cuenta</CardTitle>
           <CardDescription>
-            Accede a tu plataforma de mensajería unificada
+            Únete a la plataforma de mensajería unificada
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert className="border-green-200 bg-green-50 text-green-800">
+              <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
 
@@ -131,6 +129,7 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
                 />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
@@ -148,6 +147,25 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="rounded-xl pl-10"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
             <Button
               type="submit"
               className="w-full rounded-xl h-11"
@@ -157,48 +175,26 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Iniciando sesión...
+                  Registrando...
                 </div>
               ) : (
-                'Iniciar sesión'
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Crear cuenta
+                </div>
               )}
             </Button>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">
-                O continúa con
-              </span>
-            </div>
-          </div>
-
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              console.log('Error al iniciar sesión con Google');
-            }}
-            useOneTap={false}
-            theme="outline"
-            size="large"
-            text="continue_with"
-            shape="rectangular"
-            width="100%"
-            locale="es"
-          />
-
           <div className="text-center">
             <Button
               variant="ghost"
-              onClick={onShowRegister}
+              onClick={onBackToLogin}
               className="text-sm text-gray-600 hover:text-gray-800"
               disabled={isLoading}
             >
-              ¿No tienes cuenta? Regístrate
-              <ArrowRight className="h-4 w-4 ml-1" />
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              ¿Ya tienes cuenta? Inicia sesión
             </Button>
           </div>
         </CardContent>
@@ -206,3 +202,4 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
     </div>
   );
 }
+
