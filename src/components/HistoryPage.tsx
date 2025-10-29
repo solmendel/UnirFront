@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { Search, MessageSquare, UserPlus, Settings, Trash2, Zap, Link2 } from 'lucide-react';
+import { Search, MessageSquare, UserPlus, Settings, Trash2, Zap, Link2, Loader2 } from 'lucide-react';
 
 interface HistoryEntry {
   id: string;
@@ -16,81 +16,8 @@ interface HistoryEntry {
   details: string;
 }
 
-// 🔹 Mock interno original
-const mockHistory: HistoryEntry[] = [
-  {
-    id: '1',
-    date: '25 Oct 2025',
-    time: '14:30',
-    user: 'Ana López',
-    action: 'Envió mensaje',
-    actionType: 'message',
-    details: 'Respondió a María González vía Instagram'
-  },
-  {
-    id: '2',
-    date: '25 Oct 2025',
-    time: '12:15',
-    user: 'Carlos Admin',
-    action: 'Invitó colaborador',
-    actionType: 'user',
-    details: 'Invitó a jorge@unir.com como Colaborador'
-  },
-  {
-    id: '3',
-    date: '25 Oct 2025',
-    time: '11:45',
-    user: 'Sistema',
-    action: 'Respuesta automática',
-    actionType: 'auto-response',
-    details: 'Envió plantilla "Saludo inicial" a nuevo contacto'
-  },
-  {
-    id: '4',
-    date: '24 Oct 2025',
-    time: '18:45',
-    user: 'Ana López',
-    action: 'Envió mensaje',
-    actionType: 'message',
-    details: 'Respondió a Pedro López vía WhatsApp'
-  },
-  {
-    id: '5',
-    date: '24 Oct 2025',
-    time: '16:20',
-    user: 'Carlos Admin',
-    action: 'Modificó configuración',
-    actionType: 'settings',
-    details: 'Actualizó plantilla de respuesta automática'
-  },
-  {
-    id: '6',
-    date: '24 Oct 2025',
-    time: '14:30',
-    user: 'Carlos Admin',
-    action: 'Conectó cuenta',
-    actionType: 'connection',
-    details: 'Conectó cuenta de Instagram @unir_oficial'
-  },
-  {
-    id: '7',
-    date: '23 Oct 2025',
-    time: '15:30',
-    user: 'Carlos Admin',
-    action: 'Eliminó colaborador',
-    actionType: 'delete',
-    details: 'Eliminó a usuario@ejemplo.com del equipo'
-  },
-  {
-    id: '8',
-    date: '22 Oct 2025',
-    time: '17:00',
-    user: 'Carlos Admin',
-    action: 'Invitó colaborador',
-    actionType: 'user',
-    details: 'Invitó a maria@unir.com como Administrador'
-  }
-];
+// URL del backend SQLite (por defecto localhost:3001, ajustar si es diferente)
+const HISTORY_API_URL = (import.meta as any).env?.VITE_HISTORY_API_URL || 'http://localhost:3001';
 
 // 🔹 Configuración visual
 const actionConfig = {
@@ -103,8 +30,59 @@ const actionConfig = {
 };
 
 export function HistoryPage() {
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Record<string, number>>({});
+
+  // Cargar historial desde el backend
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Construir query params - solo filtros, la búsqueda se hace localmente
+        const params = new URLSearchParams();
+        if (selectedFilters.length > 0) {
+          // Si hay múltiples filtros, el backend solo acepta uno, así que usamos el primero
+          params.append('actionType', selectedFilters[0]);
+        }
+
+        const url = `${HISTORY_API_URL}/api/history${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar el historial');
+        }
+
+        const data = await response.json();
+        setHistory(data);
+
+        // Calcular estadísticas basadas en todos los datos
+        const statsData: Record<string, number> = {};
+        data.forEach((entry: HistoryEntry) => {
+          statsData[entry.actionType] = (statsData[entry.actionType] || 0) + 1;
+        });
+        setStats(statsData);
+      } catch (err) {
+        console.error('Error loading history:', err);
+        setError('No se pudo cargar el historial. Verifica que el backend esté corriendo en http://localhost:3001');
+        setHistory([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Debounce para searchQuery - solo recargar si cambian los filtros
+    const timer = setTimeout(() => {
+      loadHistory();
+    }, searchQuery ? 300 : 0); // Delay para búsqueda
+
+    return () => clearTimeout(timer);
+  }, [selectedFilters]); // Solo recargar cuando cambian los filtros, no cuando cambia searchQuery
 
   const toggleFilter = (filterType: string) => {
     setSelectedFilters((prev) =>
@@ -114,7 +92,8 @@ export function HistoryPage() {
     );
   };
 
-  const filteredHistory = mockHistory.filter((entry) => {
+  // Filtrar localmente además de la búsqueda del servidor para mejor UX
+  const filteredHistory = history.filter((entry) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
@@ -131,11 +110,6 @@ export function HistoryPage() {
 
     return true;
   });
-
-  const stats = mockHistory.reduce((acc, entry) => {
-    acc[entry.actionType] = (acc[entry.actionType] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
@@ -218,22 +192,44 @@ export function HistoryPage() {
           {/* Tabla de resultados */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm p-2 md:p-4">
             <div className="mb-4 px-4 pt-2">
-              <p className="text-sm text-muted-foreground">
-                Mostrando {filteredHistory.length} de {mockHistory.length} registros
-              </p>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <p className="text-sm text-muted-foreground">Cargando historial...</p>
+                </div>
+              ) : error ? (
+                <p className="text-sm text-red-600">{error}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {filteredHistory.length} de {history.length} registros
+                </p>
+              )}
             </div>
             <div className="responsive-scroll rounded-xl">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha y Hora</TableHead>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Acción</TableHead>
-                    <TableHead className="hidden md:table-cell">Detalles</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredHistory.map((entry) => (
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-muted-foreground">{error}</p>
+                </div>
+              ) : filteredHistory.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-muted-foreground">No hay registros disponibles</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha y Hora</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Acción</TableHead>
+                      <TableHead className="hidden md:table-cell">Detalles</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHistory.map((entry) => (
                     <TableRow
                       key={entry.id}
                       className="hover:bg-gradient-to-r hover:from-pink-50/30 hover:to-green-50/30"
@@ -272,9 +268,10 @@ export function HistoryPage() {
                         {entry.details}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </div>
         </div>

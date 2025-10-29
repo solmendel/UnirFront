@@ -8,9 +8,36 @@ export interface Collaborator {
 
 const BASE_URL = "http://localhost:3001/api/collaborators";
 
+// Función auxiliar para obtener el token del localStorage
+function getAuthToken(): string | null {
+  // El authService usa 'unir-session' (con guión)
+  const session = localStorage.getItem('unir-session');
+  if (session) {
+    try {
+      const parsed = JSON.parse(session);
+      return parsed.token || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// Función auxiliar para obtener headers con autenticación
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export const collaboratorService = {
   async getAll(): Promise<Collaborator[]> {
-    const res = await fetch(BASE_URL);
+    const res = await fetch(BASE_URL, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error("Error al obtener colaboradores");
     return res.json();
   },
@@ -18,7 +45,7 @@ export const collaboratorService = {
   async invite(collaborator: { name: string; email: string; role?: string }) {
     const res = await fetch(`${BASE_URL}/invite`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(collaborator),
     });
     if (!res.ok) throw new Error("Error al invitar colaborador");
@@ -28,7 +55,7 @@ export const collaboratorService = {
   async updateRole(id: number, role: string) {
     const res = await fetch(`${BASE_URL}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ role }),
     });
     if (!res.ok) throw new Error("Error al actualizar rol");
@@ -36,7 +63,10 @@ export const collaboratorService = {
   },
 
   async remove(id: number) {
-    const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+    const res = await fetch(`${BASE_URL}/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error("Error al eliminar colaborador");
     return res.json();
   },

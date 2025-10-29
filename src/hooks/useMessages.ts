@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiService } from "../services/api";
 import { wsService } from "../services/websocket";
+import { logMessageSend } from "../services/historyService";
 import {
   Conversation,
   ChatMessage,
@@ -99,6 +100,11 @@ export function useMessages() {
 
         try {
           const newMessage = await apiService.createMessage(messageData);
+
+          // Registrar en historial (asíncrono, no bloquea)
+          logMessageSend(content, conversation.participantName, conversation.platform).catch(
+            (err) => console.warn('Error al registrar mensaje en historial:', err)
+          );
 
           // Only update local state if WebSocket is not connected
           // If WebSocket is connected, the broadcast will handle the update

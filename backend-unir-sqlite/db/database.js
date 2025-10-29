@@ -46,6 +46,26 @@ function inicializarTablas() {
       console.log('✓ Tabla users lista');
     }
   });
+
+  // Tabla de historial de acciones
+  db.run(`
+    CREATE TABLE IF NOT EXISTS history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user TEXT NOT NULL,
+      action TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      details TEXT NOT NULL,
+      endpoint TEXT,
+      method TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('❌ Error al crear tabla history:', err.message);
+    } else {
+      console.log('✓ Tabla history lista');
+    }
+  });
 }
 
 // Promisificar las consultas para usar async/await
