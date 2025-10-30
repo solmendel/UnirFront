@@ -93,17 +93,20 @@ export function useMessages() {
         const conversation = conversations.find((c) => c.id === conversationId);
         if (!conversation) return;
 
-        const messageData = {
-          content,
+        // Usar /api/v1/send endpoint
+        const sendRequest = {
+          channel: conversation.platform,
+          to: conversation.participantIdentifier,
+          message: content,
           message_type: messageType,
-          direction: "outgoing",
-          sender_identifier: "admin", // Identificador del admin
-          timestamp: new Date().toISOString(),
-          conversation_id: parseInt(conversationId),
         };
 
         try {
-          const newMessage = await apiService.createMessage(messageData);
+          const response = await apiService.sendMessage(sendRequest);
+
+          if (!response.success) {
+            throw new Error(response.error || "Error al enviar el mensaje");
+          }
 
           // Registrar en historial (asíncrono, no bloquea)
           logMessageSend(content, conversation.participantName, conversation.platform).catch(
@@ -113,12 +116,16 @@ export function useMessages() {
           // Only update local state if WebSocket is not connected
           // If WebSocket is connected, the broadcast will handle the update
           if (!wsService.isConnected()) {
+            // Crear mensaje local temporal usando la respuesta
+            const messageIdNum = response.message_id ? 
+              (typeof response.message_id === 'string' ? parseInt(response.message_id) : response.message_id) : 
+              Date.now();
             const chatMessage: ChatMessage = {
-              id: newMessage.id.toString(),
-              text: newMessage.content,
+              id: response.message_id?.toString() || Date.now().toString(),
+              text: content,
               sender: "me",
-              time: apiService["formatTime"](new Date(newMessage.timestamp)),
-              messageId: newMessage.id,
+              time: apiService["formatTime"](new Date()),
+              messageId: messageIdNum,
               isRead: true,
             };
 
