@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
-import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
-import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useMessages } from '../hooks/useMessages';
-import { Conversation } from '../types/api';
+import { MessageList } from './MessageList';
+import { ConversationList } from './ConversationList';
 
 export function MessagesPage() {
   const {
@@ -24,12 +24,22 @@ export function MessagesPage() {
     isConnected
   } = useMessages();
 
-  const [filter, setFilter] = useState<string>('all');
   const [reply, setReply] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [pollTrigger, setPollTrigger] = useState(0);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Synchronized polling trigger - interval from .env (default 5000ms)
+  useEffect(() => {
+    const pollIntervalMs = parseInt((import.meta as any).env.VITE_POLL_INTERVAL) || 5000;
+    
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setPollTrigger(prev => prev + 1);
+      }
+    }, pollIntervalMs);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // 👉 Estado de plantillas
   const [templates, setTemplates] = useState([
@@ -89,13 +99,6 @@ export function MessagesPage() {
     }
   }, [selectedConversation, markMessageAsRead]);
 
-  // Auto scroll
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [selectedConversation?.conversation]);
-
   const platformIcons = {
     instagram: <Instagram className="h-4 w-4" />,
     whatsapp: <MessageCircle className="h-4 w-4" />,
@@ -107,18 +110,6 @@ export function MessagesPage() {
     whatsapp: '#25d366',
     gmail: '#ea4335'
   };
-
-  const filteredConversations = conversations
-    .filter(conv => filter === 'all' ? true : conv.platform === filter)
-    .filter(conv => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        conv.participantName.toLowerCase().includes(query) ||
-        conv.lastMessage.toLowerCase().includes(query) ||
-        conv.conversation.some(chat => chat.text.toLowerCase().includes(query))
-      );
-    });
 
   if (isLoading) {
     return (
@@ -152,60 +143,13 @@ export function MessagesPage() {
 
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Sidebar */}
-        <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col">
-          <div className="p-4 border-b flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar mensajes..."
-                className="pl-10 rounded-xl"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1 overflow-hidden min-h-0 [&>div>div]:max-w-full [&>div>div]:w-full [&>div>div]:box-border">
-            <div className="p-3 pb-6 box-border" style={{ width: '100%', maxWidth: '100%', minWidth: 0, display: 'block' }}>
-              {error && (
-                <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-700 break-words">{error}</span>
-                  </div>
-                </div>
-              )}
-              {filteredConversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => setSelectedConversation(conversation)}
-                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all overflow-hidden ${
-                    selectedConversation?.id === conversation.id
-                      ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
-                      : 'hover:bg-white/80'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2 gap-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="font-medium truncate">{conversation.participantName}</span>
-                      {conversation.unread && (
-                        <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#ec6c8c' }} />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">{conversation.time}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
-                    {conversation.lastMessage}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: platformColors[conversation.platform] }}>
-                    {platformIcons[conversation.platform]}
-                    <span className="capitalize">{conversation.platform}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
+        <ConversationList
+          onSelectConversation={setSelectedConversation}
+          selectedConversationId={selectedConversation?.id || null}
+          initialConversations={conversations}
+          error={error}
+          pollTrigger={pollTrigger}
+        />
 
         {/* Chat View */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -221,34 +165,13 @@ export function MessagesPage() {
                 </div>
               </div>
 
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-4 w-full pb-6">
-                  {selectedConversation.conversation.map((chat) => (
-                    <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
-                          chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''
-                        }`}
-                        style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}
-                      >
-                        {chat.sender === 'me' ? 'Yo' : selectedConversation.participantName.charAt(0)}
-                      </div>
-                      <div className="flex-1 max-w-lg">
-                        <div
-                          className={`rounded-2xl p-4 shadow-sm ${
-                            chat.sender === 'me'
-                              ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm'
-                              : 'bg-white rounded-tl-sm'
-                          }`}
-                        >
-                          <p>{chat.text}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground mt-1 ml-1 block">{chat.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <MessageList
+                conversationId={selectedConversation.id}
+                participantName={selectedConversation.participantName}
+                platform={selectedConversation.platform}
+                initialMessages={selectedConversation.conversation}
+                pollTrigger={pollTrigger}
+              />
 
               {/* Área de plantillas + entrada */}
               <div className="border-t bg-white/80 backdrop-blur-sm p-6 flex-shrink-0">

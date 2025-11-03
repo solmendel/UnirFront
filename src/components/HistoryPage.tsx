@@ -16,8 +16,8 @@ interface HistoryEntry {
   details: string;
 }
 
-// URL del backend SQLite (por defecto localhost:3001, ajustar si es diferente)
-const HISTORY_API_URL = (import.meta as any).env?.VITE_HISTORY_API_URL || 'http://localhost:3001';
+// URL del backend SQLite
+const HISTORY_API_URL = (import.meta as any).env.VITE_HISTORY_API_URL;
 
 // 🔹 Configuración visual
 const actionConfig = {
@@ -69,7 +69,7 @@ export function HistoryPage() {
         setStats(statsData);
       } catch (err) {
         console.error('Error loading history:', err);
-        setError('No se pudo cargar el historial. Verifica que el backend esté corriendo en http://localhost:3001');
+        setError('No se pudo cargar el historial. Verifica que el backend esté corriendo y que VITE_HISTORY_API_URL esté configurado.');
         setHistory([]);
       } finally {
         setIsLoading(false);

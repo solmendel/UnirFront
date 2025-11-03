@@ -206,7 +206,9 @@ class ApiService {
 
     // Manejo de mensajes
     const messages = conversationResponse.messages || [];
-    const chatMessages: ChatMessage[] = messages.map(msg => ({
+    // Sort messages by ID to ensure chronological order
+    const sortedMessages = [...messages].sort((a, b) => a.id - b.id);
+    const chatMessages: ChatMessage[] = sortedMessages.map(msg => ({
       id: msg.id.toString(),
       text: msg.content,
       sender: msg.direction === 'incoming' ? 'user' : 'me',

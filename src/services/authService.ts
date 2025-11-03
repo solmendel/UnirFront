@@ -1,12 +1,12 @@
 // Servicio de autenticación para conectar con el backend de Unir
 // Use VITE_AUTH_API_URL if configured, otherwise use the main API URL with /api/auth path
 const getAuthApiUrl = (): string => {
-  const authUrl = import.meta.env.VITE_AUTH_API_URL;
+  const authUrl = (import.meta as any).env.VITE_AUTH_API_URL;
   if (authUrl) {
     return authUrl;
   }
   // Fallback: use main API URL if auth URL not configured
-  const mainApiUrl = import.meta.env.VITE_API_URL || 'http://100.24.77.57:8003';
+  const mainApiUrl = (import.meta as any).env.VITE_API_URL;
   return `${mainApiUrl}/api/auth`;
 };
 const API_BASE_URL = getAuthApiUrl();

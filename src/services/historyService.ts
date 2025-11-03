@@ -1,5 +1,5 @@
 // Servicio para notificar al backend SQLite sobre acciones realizadas
-const HISTORY_API_URL = (import.meta as any).env?.VITE_HISTORY_API_URL || 'http://localhost:3001';
+const HISTORY_API_URL = (import.meta as any).env.VITE_HISTORY_API_URL;
 
 interface HistoryEntry {
   user: string;

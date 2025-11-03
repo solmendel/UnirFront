@@ -6,7 +6,7 @@ export interface Collaborator {
   created_at: string;
 }
 
-const BASE_URL = "http://localhost:3001/api/collaborators";
+const BASE_URL = `${(import.meta as any).env.VITE_COLLABORATOR_API_URL}/api/collaborators`;
 
 // Función auxiliar para obtener el token del localStorage
 function getAuthToken(): string | null {
