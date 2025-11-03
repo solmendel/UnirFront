@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import { wsService } from '../services/websocket';
-import { Conversation, ChatMessage, MessageResponse, ConversationResponse } from '../types/api';
+import { Conversation, Message, ConversationResponse, ConversationCategory } from '../types/api';
 
 export function useMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -18,9 +18,10 @@ export function useMessages() {
       // Intentar cargar conversaciones del backend
       try {
         const conversationResponses = await apiService.getConversations({ limit: 100 });
-        const convertedConversations = conversationResponses.map(conv => 
-          apiService.convertToConversation(conv)
-        );
+        const convertedConversations = conversationResponses.map(conv => {
+          const converted = apiService.convertToConversation(conv);
+          return converted;
+        });
         setConversations(convertedConversations);
       } catch (apiError) {
         // Si el backend no está disponible, mostrar lista vacía
@@ -68,7 +69,7 @@ export function useMessages() {
         content,
         message_type: messageType,
         direction: 'outgoing',
-        sender_identifier: 'admin', // Identificador del admin
+        sender_identifier: 'admin',
         timestamp: new Date().toISOString(),
         conversation_id: parseInt(conversationId),
       };
@@ -77,14 +78,13 @@ export function useMessages() {
         const newMessage = await apiService.createMessage(messageData);
         
         // Only update local state if WebSocket is not connected
-        // If WebSocket is connected, the broadcast will handle the update
         if (!wsService.isConnected()) {
-          const chatMessage: ChatMessage = {
+          const chatMessage: Message = {
             id: newMessage.id.toString(),
-            text: newMessage.content,
             sender: 'me',
+            text: newMessage.content,
             time: apiService['formatTime'](new Date(newMessage.timestamp)),
-            messageId: newMessage.id,
+            messageId: newMessage.id.toString(),
             isRead: true
           };
 
@@ -112,17 +112,16 @@ export function useMessages() {
             );
           }
         }
-        // If WebSocket is connected, the broadcast will update the UI
         
       } catch (apiError) {
         // Si el backend no está disponible, simular envío local
         console.log('Backend no disponible, simulando envío local');
-        const chatMessage: ChatMessage = {
+        const chatMessage: Message = {
           id: Date.now().toString(),
-          text: content,
           sender: 'me',
+          text: content,
           time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-          messageId: Date.now(),
+          messageId: Date.now().toString(),
           isRead: true
         };
 
@@ -186,9 +185,12 @@ export function useMessages() {
   }, []);
 
   // Marcar mensaje como leído
-  const markMessageAsRead = useCallback(async (messageId: number) => {
+  const markMessageAsRead = useCallback(async (messageId: string) => {
     try {
-      await apiService.markMessageAsRead(messageId);
+      const msgId = parseInt(messageId);
+      if (!isNaN(msgId)) {
+        await apiService.markMessageAsRead(msgId);
+      }
       
       // Actualizar estado local
       setConversations(prev => 
@@ -216,31 +218,71 @@ export function useMessages() {
     }
   }, [selectedConversation]);
 
-  // Configurar WebSocket (only on mount/unmount, not when state changes)
+  // Actualizar categoría de conversación
+  const updateConversationCategory = useCallback(async (
+    conversationId: string,
+    category: ConversationCategory
+  ) => {
+    try {
+      const convId = parseInt(conversationId);
+      if (!isNaN(convId)) {
+        await apiService.updateConversationCategory(convId, category === 'sin_categoria' ? null : category);
+      }
+      
+      // Actualizar estado local
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, category }
+            : conv
+        )
+      );
+
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => 
+          prev ? { ...prev, category } : null
+        );
+      }
+    } catch (err) {
+      console.error('Error updating conversation category:', err);
+      // Actualizar estado local aunque falle el backend
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, category }
+            : conv
+        )
+      );
+
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => 
+          prev ? { ...prev, category } : null
+        );
+      }
+    }
+  }, [selectedConversation?.id]);
+
+  // Configurar WebSocket
   useEffect(() => {
     const callbacks = {
-      onNewMessage: (message: MessageResponse) => {
+      onNewMessage: (message: any) => {
         console.log('New message received via WebSocket:', message);
         
-        // Update the specific conversation with the new message
         const convId = message.conversation_id.toString();
         
-        // Convert the incoming message to ChatMessage format
-        const chatMessage: ChatMessage = {
+        const chatMessage: Message = {
           id: message.id.toString(),
-          text: message.content,
           sender: message.direction === 'incoming' ? 'user' : 'me',
+          text: message.content,
           time: apiService['formatTime'](new Date(message.timestamp)),
-          messageId: message.id,
+          messageId: message.id.toString(),
           isRead: message.is_read
         };
 
-        // Update conversations list
         setConversations(prev => {
           return prev.map(conv => {
             if (conv.id === convId) {
-              // Check if message already exists
-              const exists = conv.conversation.some(m => m.messageId === message.id);
+              const exists = conv.conversation.some(m => m.messageId === message.id.toString());
               if (exists) return conv;
               
               return {
@@ -255,11 +297,10 @@ export function useMessages() {
           });
         });
 
-        // Update selectedConversation separately
         setSelectedConversation(prev => {
           if (!prev || prev.id !== convId) return prev;
           
-          const exists = prev.conversation.some(m => m.messageId === message.id);
+          const exists = prev.conversation.some(m => m.messageId === message.id.toString());
           if (exists) return prev;
           
           return {
@@ -277,6 +318,13 @@ export function useMessages() {
       
       onConversationUpdated: (conversation: ConversationResponse) => {
         console.log('Conversation updated:', conversation);
+        const updated = apiService.convertToConversation(conversation);
+        setConversations(prev => 
+          prev.map(conv => conv.id === updated.id ? updated : conv)
+        );
+        if (selectedConversation?.id === updated.id) {
+          setSelectedConversation(updated);
+        }
       },
       
       onConnect: () => {
@@ -292,7 +340,6 @@ export function useMessages() {
       }
     };
 
-    // Intentar conectar WebSocket
     try {
       wsService.connect(callbacks);
     } catch (error) {
@@ -302,7 +349,7 @@ export function useMessages() {
     return () => {
       wsService.disconnect();
     };
-  }, []); // Empty dependencies - only run on mount/unmount
+  }, []);
 
   // Cargar conversaciones al montar el componente
   useEffect(() => {
@@ -312,7 +359,6 @@ export function useMessages() {
   // Cargar mensajes completos cuando se selecciona una conversación
   useEffect(() => {
     if (selectedConversation && selectedConversation.conversation.length === 0) {
-      // Solo cargar si no tenemos mensajes todavía
       const convId = parseInt(selectedConversation.id);
       if (!isNaN(convId)) {
         loadConversation(convId);
@@ -331,6 +377,7 @@ export function useMessages() {
     sendMessage,
     sendWhatsAppMessage,
     markMessageAsRead,
+    updateConversationCategory,
     isConnected: wsService.isConnected()
   };
 }

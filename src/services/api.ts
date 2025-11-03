@@ -8,7 +8,8 @@ import {
   SendMessageResponse,
   UnifiedMessage,
   Conversation,
-  ChatMessage
+  ChatMessage,
+  ConversationCategory
 } from '../types/api';
 import { API_CONFIG } from '../config/api';
 
@@ -156,6 +157,13 @@ class ApiService {
     });
   }
 
+  async updateConversationCategory(conversationId: number, category: string | null): Promise<void> {
+    const categoryParam = category ? encodeURIComponent(category) : '';
+    return this.request<void>(`/api/v1/conversations/${conversationId}/category?category=${categoryParam}`, {
+      method: 'PUT',
+    });
+  }
+
   async deactivateConversation(conversationId: number): Promise<void> {
     return this.request<void>(`/api/v1/conversations/${conversationId}/deactivate`, {
       method: 'PUT',
@@ -243,9 +251,17 @@ class ApiService {
       lastMessage: lastMessage || 'Sin mensajes',
       time: lastMessageTime,
       unread: hasUnread,
-      conversation: chatMessages,
+      conversation: chatMessages.map(msg => ({
+        id: msg.id,
+        sender: msg.sender,
+        text: msg.text,
+        time: msg.time,
+        isRead: msg.isRead,
+        messageId: msg.messageId?.toString()
+      })),
       channelId: conversationResponse.channel_id,
-      externalId: conversationResponse.external_id
+      externalId: conversationResponse.external_id,
+      category: (conversationResponse.category || 'sin_categoria') as ConversationCategory
     };
   }
 

@@ -36,6 +36,7 @@ export interface ConversationResponse {
   external_id: string;
   created_at: string;
   updated_at: string;
+  category?: string | null; // Categoría de la conversación
   messages?: MessageResponse[]; // Optional - included when fetching a single conversation
 }
 
@@ -91,6 +92,19 @@ export interface ValidationError {
 }
 
 // Tipos para el frontend
+export type Platform = 'instagram' | 'whatsapp' | 'gmail';
+export type MessageSender = 'me' | 'user';
+export type ConversationCategory = 'consulta' | 'pedido' | 'reclamo' | 'sin_categoria';
+
+export interface Message {
+  id: string;
+  sender: MessageSender;
+  text: string;
+  time: string;
+  isRead?: boolean;
+  messageId?: string;
+}
+
 export interface ChatMessage {
   id: string;
   text: string;
@@ -103,14 +117,15 @@ export interface ChatMessage {
 export interface Conversation {
   id: string;
   participantName: string;
-  participantIdentifier: string;
-  platform: 'whatsapp' | 'instagram' | 'gmail';
+  participantIdentifier?: string;
+  platform: Platform;
   lastMessage: string;
   time: string;
   unread: boolean;
-  conversation: ChatMessage[];
-  channelId: number;
-  externalId: string;
+  conversation: Message[];
+  channelId?: number;
+  externalId?: string;
+  category?: ConversationCategory;
 }
 
 export interface ApiConfig {
