@@ -5,7 +5,6 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
 import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
@@ -132,7 +131,7 @@ export function MessagesPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30 overflow-hidden">
       <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
@@ -152,7 +151,7 @@ export function MessagesPage() {
 
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Sidebar */}
-        <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col">
+        <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col min-h-0">
           <div className="p-4 border-b flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -165,7 +164,7 @@ export function MessagesPage() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-2 pb-6">
               {error && (
                 <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
@@ -204,7 +203,7 @@ export function MessagesPage() {
                 </button>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Chat View */}

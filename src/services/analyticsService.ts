@@ -4,9 +4,9 @@ class AnalyticsService {
   private baseUrl: string;
 
   constructor() {
-    // El backend de analytics corre en el puerto 8000 por defecto según el README
+    // Conecta al Core API que corre en el puerto 8003 por defecto
     // Se puede configurar con variable de entorno VITE_ANALYTICS_API_URL
-    this.baseUrl = import.meta.env.VITE_ANALYTICS_API_URL || 'http://127.0.0.1:8000';
+    this.baseUrl = import.meta.env.VITE_ANALYTICS_API_URL || 'http://localhost:8003';
   }
 
   private async request<T>(
@@ -41,7 +41,8 @@ class AnalyticsService {
    * Obtiene los datos del dashboard de analytics
    */
   async getDashboard(): Promise<DashboardMetrics> {
-    return this.request<DashboardMetrics>('/analytics/dashboard');
+    // El Core API usa /api/v1/analytics/dashboard
+    return this.request<DashboardMetrics>('/api/v1/analytics/dashboard');
   }
 
   /**

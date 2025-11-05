@@ -235,9 +235,23 @@ class ApiService {
     const hasUnread = conversationResponse.has_unread || 
                      messages.some(msg => !msg.is_read && msg.direction === 'incoming');
 
+    // Intentar obtener el nombre del participante de diferentes fuentes
+    let participantName = conversationResponse.participant_name;
+    
+    // Si no hay nombre, intentar obtenerlo del sender_name del primer mensaje entrante
+    if (!participantName || participantName === 'Usuario') {
+      const firstIncomingMsg = messages.find(msg => msg.direction === 'incoming' && msg.sender_name);
+      if (firstIncomingMsg && firstIncomingMsg.sender_name) {
+        participantName = firstIncomingMsg.sender_name;
+      } else {
+        // Si tampoco hay sender_name, usar el identificador (email, teléfono, etc)
+        participantName = conversationResponse.participant_identifier || 'Usuario';
+      }
+    }
+
     return {
       id: conversationResponse.id.toString(),
-      participantName: conversationResponse.participant_name || 'Usuario',
+      participantName: participantName,
       participantIdentifier: conversationResponse.participant_identifier,
       platform,
       lastMessage: lastMessage || 'Sin mensajes',
