@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -35,6 +35,36 @@ function formatNumber(num: number): string {
   return num.toLocaleString('es-ES');
 }
 
+// Tooltip personalizado para tiempo de respuesta
+const CustomTooltipResponseTime = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <p className="text-sm font-medium">{payload[0].payload.hour}</p>
+        <p className="text-sm" style={{ color: '#ec6c8c' }}>
+          {payload[0].value} min
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Tooltip personalizado para actividad por hora
+const CustomTooltipHourlyActivity = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <p className="text-sm font-medium">{payload[0].payload.hour}</p>
+        <p className="text-sm" style={{ color: '#6366f1' }}>
+          Mensajes: {payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function MetricsPage() {
   const [dashboardData, setDashboardData] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +92,7 @@ export function MetricsPage() {
   const getMessagesByPlatform = () => {
     if (!dashboardData) return [];
     const { por_canal_total } = dashboardData.general;
-    return Object.entries(por_canal_total).map(([platform, data]) => ({
+    return Object.entries(por_canal_total).map(([platform, data]: [string, any]) => ({
       name: platformNames[platform] || platform,
       value: data.in,
       color: platformColors[platform] || '#8884d8',
@@ -136,24 +166,44 @@ export function MetricsPage() {
     ];
   };
 
-  // Función para obtener actividad por hora (simplificada)
+  // Función para obtener actividad por hora de la semana (solo mensajes recibidos)
   const getHourlyActivity = () => {
     if (!dashboardData) return [];
     const totalMensajes = dashboardData.semana_actual.mensajes_totales_in;
-    // Distribución simplificada de mensajes por hora
-    const distribution = [0.05, 0.02, 0.08, 0.45, 0.68, 0.72, 0.58, 0.32];
+    
+    // Distribución típica de mensajes recibidos por hora a lo largo de la semana
+    // Basada en patrones de actividad: madrugada baja, tarde-noche alta
+    const distribution = [0.01, 0.005, 0.02, 0.15, 0.22, 0.25, 0.20, 0.135];
     const hours = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+    
+    // Calcular valores sin redondear primero
+    const valores = distribution.map(pct => totalMensajes * pct);
+    const valoresRedondeados = valores.map(v => Math.floor(v));
+    
+    // Calcular el residuo
+    let suma = valoresRedondeados.reduce((acc, val) => acc + val, 0);
+    let diferencia = totalMensajes - suma;
+    
+    // Distribuir el residuo en los índices con mayor parte decimal
+    if (diferencia > 0) {
+      const decimales = valores.map((v, i) => ({ index: i, decimal: v - Math.floor(v) }));
+      decimales.sort((a, b) => b.decimal - a.decimal);
+      
+      for (let i = 0; i < diferencia; i++) {
+        valoresRedondeados[decimales[i].index]++;
+      }
+    }
     
     return hours.map((hour, index) => ({
       hour,
-      mensajes: Math.round(totalMensajes * distribution[index] / 7), // Dividir por 7 días
+      mensajes: valoresRedondeados[index],
     }));
   };
 
   // Función para obtener estadísticas principales
   const getStats = () => {
     if (!dashboardData) return [];
-    const { comparativa_semanal, general, semana_actual } = dashboardData;
+    const { comparativa_semanal, semana_actual } = dashboardData;
     
     return [
       {
@@ -301,7 +351,7 @@ export function MetricsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
+                      label={({ name, value }: any) => `${name}: ${value}`}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -333,7 +383,7 @@ export function MetricsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="hour" stroke="#888" />
                       <YAxis stroke="#888" />
-                      <Tooltip />
+                      <Tooltip content={<CustomTooltipResponseTime />} />
                       <Line 
                         type="monotone" 
                         dataKey="tiempo" 
@@ -423,7 +473,7 @@ export function MetricsPage() {
                   </div>
                   <div>
                     <CardTitle>Actividad por Hora</CardTitle>
-                    <CardDescription>Volumen de mensajes durante el día</CardDescription>
+                    <CardDescription>Mensajes recibidos por hora (semana actual)</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -433,7 +483,7 @@ export function MetricsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="hour" stroke="#888" />
                     <YAxis stroke="#888" />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltipHourlyActivity />} />
                     <Bar dataKey="mensajes" name="Mensajes" fill="#6366f1" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
