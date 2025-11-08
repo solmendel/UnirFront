@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
 import { MessagesPage } from './components/MessagesPage';
@@ -130,12 +130,12 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-2 px-2 py-3 rounded-xl transition-all ${
                   isActive ? 'bg-white shadow-sm' : 'hover:bg-white/50'
                 }`}
               >
                 <div
-                  className="p-2 rounded-lg"
+                  className="p-2 rounded-lg flex-shrink-0 flex items-center justify-center"
                   style={{
                     backgroundColor: isActive ? `${item.color}20` : 'transparent',
                   }}
@@ -146,7 +146,7 @@ export default function App() {
                   />
                 </div>
                 <span
-                  className="transition-colors"
+                  className="transition-colors leading-tight self-center"
                   style={{ color: isActive ? item.color : '#888' }}
                 >
                   {item.label}

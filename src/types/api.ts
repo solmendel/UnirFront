@@ -117,3 +117,64 @@ export interface ApiConfig {
   baseUrl: string;
   wsUrl: string;
 }
+
+// Tipos para Analytics Dashboard
+export interface DashboardMetrics {
+  general: GeneralMetrics;
+  semana_anterior: WeeklyMetrics;
+  semana_actual: WeeklyMetrics;
+  comparativa_semanal: WeeklyComparison;
+}
+
+export interface GeneralMetrics {
+  frt_avg_min: number | null;
+  pct_respondido_24h: number | null;
+  conversations_total: number;
+  mensajes_totales_in: number;
+  mensajes_totales_out: number;
+  por_canal_total: Record<string, { in: number; out: number }>;
+}
+
+export interface WeeklyMetrics {
+  ventana: {
+    desde_lunes: string;
+    hasta_domingo: string;
+    zona: string;
+  };
+  frt_avg_min: number | null;
+  pct_respondido_24h: number | null;
+  conversations: number;
+  mensajes_totales_in: number;
+  mensajes_totales_out: number;
+  por_canal: Record<string, { in: number; out: number }>;
+  mensajes_por_dia: Record<string, { in: number; out: number }>;
+  mensajes_por_dia_por_canal?: Record<string, Record<string, { in: number; out: number }>>;
+}
+
+export interface WeeklyComparison {
+  mensajes_totales_in: {
+    semana_anterior: number;
+    semana_actual: number;
+    cambio_porcentual: number | null;
+  };
+  mensajes_respondidos: {
+    semana_anterior: number;
+    semana_actual: number;
+    cambio_porcentual: number | null;
+  };
+  tiempo_promedio_respuesta_min: {
+    semana_anterior: number | null;
+    semana_actual: number | null;
+    cambio_porcentual: number | null;
+  };
+  tasa_respuesta_24h: {
+    semana_anterior: number | null;
+    semana_actual: number | null;
+    cambio_porcentual: number | null;
+  };
+  conversaciones: {
+    semana_anterior: number;
+    semana_actual: number;
+    cambio_porcentual: number | null;
+  };
+}
