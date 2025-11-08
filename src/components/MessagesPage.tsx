@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
-import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
-import { Search, Instagram, Mail, MessageCircle, Send, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useMessages } from '../hooks/useMessages';
-import { Conversation } from '../types/api';
+import { MessageList } from './MessageList';
+import { ConversationList } from './ConversationList';
 
 export function MessagesPage() {
   const {
@@ -23,12 +24,22 @@ export function MessagesPage() {
     isConnected
   } = useMessages();
 
-  const [filter, setFilter] = useState<string>('all');
   const [reply, setReply] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [pollTrigger, setPollTrigger] = useState(0);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Synchronized polling trigger - interval from .env (default 5000ms)
+  useEffect(() => {
+    const pollIntervalMs = parseInt((import.meta as any).env.VITE_POLL_INTERVAL) || 5000;
+    
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setPollTrigger(prev => prev + 1);
+      }
+    }, pollIntervalMs);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // 👉 Estado de plantillas
   const [templates, setTemplates] = useState([
@@ -88,13 +99,6 @@ export function MessagesPage() {
     }
   }, [selectedConversation, markMessageAsRead]);
 
-  // Auto scroll
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [selectedConversation?.conversation]);
-
   const platformIcons = {
     instagram: <Instagram className="h-4 w-4" />,
     whatsapp: <MessageCircle className="h-4 w-4" />,
@@ -106,18 +110,6 @@ export function MessagesPage() {
     whatsapp: '#25d366',
     gmail: '#ea4335'
   };
-
-  const filteredConversations = conversations
-    .filter(conv => filter === 'all' ? true : conv.platform === filter)
-    .filter(conv => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        conv.participantName.toLowerCase().includes(query) ||
-        conv.lastMessage.toLowerCase().includes(query) ||
-        conv.conversation.some(chat => chat.text.toLowerCase().includes(query))
-      );
-    });
 
   if (isLoading) {
     return (
@@ -220,39 +212,18 @@ export function MessagesPage() {
                 </div>
               </div>
 
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-4 max-w-3xl pb-6">
-                  {selectedConversation.conversation.map((chat) => (
-                    <div key={chat.id} className={`flex gap-3 ${chat.sender === 'me' ? 'flex-row-reverse' : ''}`}>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
-                          chat.sender === 'me' ? 'bg-gradient-to-br from-pink-400 to-green-400' : ''
-                        }`}
-                        style={chat.sender === 'user' ? { backgroundColor: '#ec6c8c' } : {}}
-                      >
-                        {chat.sender === 'me' ? 'Yo' : selectedConversation.participantName.charAt(0)}
-                      </div>
-                      <div className="flex-1 max-w-lg">
-                        <div
-                          className={`rounded-2xl p-4 shadow-sm ${
-                            chat.sender === 'me'
-                              ? 'bg-gradient-to-br from-pink-100 to-green-100 rounded-tr-sm'
-                              : 'bg-white rounded-tl-sm'
-                          }`}
-                        >
-                          <p>{chat.text}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground mt-1 ml-1 block">{chat.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <MessageList
+                conversationId={selectedConversation.id}
+                participantName={selectedConversation.participantName}
+                platform={selectedConversation.platform}
+                initialMessages={selectedConversation.conversation}
+                pollTrigger={pollTrigger}
+              />
 
               {/* Área de plantillas + entrada */}
               <div className="border-t bg-white/80 backdrop-blur-sm p-6 flex-shrink-0">
-                <div className="max-w-3xl space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+                <div className="w-full space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">Plantilla:</span>
                       <Select onValueChange={(value) => {

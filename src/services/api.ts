@@ -24,7 +24,7 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
     };
@@ -55,7 +55,7 @@ class ApiService {
     offset?: number;
   }): Promise<MessageResponse[]> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.conversation_id !== undefined) {
       searchParams.append('conversation_id', params.conversation_id.toString());
     }
@@ -71,7 +71,7 @@ class ApiService {
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v1/messages${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<MessageResponse[]>(endpoint);
   }
 
@@ -93,10 +93,10 @@ class ApiService {
   }
 
   async getUnreadCount(conversationId?: number): Promise<{ unread_count: number }> {
-    const endpoint = conversationId 
+    const endpoint = conversationId
       ? `/api/v1/messages/unread/count?conversation_id=${conversationId}`
       : '/api/v1/messages/unread/count';
-    
+
     return this.request<{ unread_count: number }>(endpoint);
   }
 
@@ -114,7 +114,7 @@ class ApiService {
     offset?: number;
   }): Promise<ConversationResponse[]> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.channel_id !== undefined) {
       searchParams.append('channel_id', params.channel_id.toString());
     }
@@ -127,7 +127,7 @@ class ApiService {
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v1/conversations${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<ConversationResponse[]>(endpoint);
   }
 
@@ -139,7 +139,7 @@ class ApiService {
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v1/conversations/${conversationId}${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<ConversationResponse>(endpoint);
   }
 
@@ -203,12 +203,12 @@ class ApiService {
   // Métodos de utilidad para convertir datos
   convertToConversation(conversationResponse: any): Conversation {
     const platform = this.getPlatformFromChannelId(conversationResponse.channel_id);
-    
-    // Handle case where messages might not be included (when fetching list of conversations)
+
+    // Manejo de mensajes
     const messages = conversationResponse.messages || [];
-    
-    // Messages should already be sorted chronologically (oldest first) from the backend
-    const chatMessages: ChatMessage[] = messages.map(msg => ({
+    // Sort messages by ID to ensure chronological order
+    const sortedMessages = [...messages].sort((a, b) => a.id - b.id);
+    const chatMessages: ChatMessage[] = sortedMessages.map(msg => ({
       id: msg.id.toString(),
       text: msg.content,
       sender: msg.direction === 'incoming' ? 'user' : 'me',
@@ -217,23 +217,21 @@ class ApiService {
       isRead: msg.is_read
     }));
 
-    // Check if we have last_message from the enriched response
+    // Determinar último mensaje y hora
     let lastMessage = null;
     let lastMessageTime = 'N/A';
-    
+
     if (conversationResponse.last_message) {
       lastMessage = conversationResponse.last_message.content;
       lastMessageTime = this.formatTime(new Date(conversationResponse.last_message.timestamp));
     } else if (messages.length > 0) {
-      // Get the last message (last in array since messages are sorted oldest to newest)
       const lastMsg = messages[messages.length - 1];
       lastMessage = lastMsg.content;
       lastMessageTime = this.formatTime(new Date(lastMsg.timestamp));
     }
 
-    // Check has_unread field or count unread messages
-    const hasUnread = conversationResponse.has_unread || 
-                     messages.some(msg => !msg.is_read && msg.direction === 'incoming');
+    const hasUnread = conversationResponse.has_unread ||
+      messages.some(msg => !msg.is_read && msg.direction === 'incoming');
 
     // Intentar obtener el nombre del participante de diferentes fuentes
     let participantName = conversationResponse.participant_name;
@@ -264,11 +262,11 @@ class ApiService {
   }
 
   private getPlatformFromChannelId(channelId: number): 'whatsapp' | 'instagram' | 'gmail' {
-    // Mapear channel_id a plataforma - ajustar según tu configuración
+    // Mapear channel_id a plataforma (ajustar según backend real)
     switch (channelId) {
       case 1: return 'whatsapp';
-      case 2: return 'instagram';
-      case 3: return 'gmail';
+      case 2: return 'gmail';
+      case 3: return 'instagram';
       default: return 'whatsapp';
     }
   }
@@ -276,18 +274,18 @@ class ApiService {
   private formatTime(date: Date): string {
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } else if (diffInHours < 48) {
       return 'Ayer';
     } else {
-      return date.toLocaleDateString('es-ES', { 
-        day: '2-digit', 
-        month: 'short' 
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short'
       });
     }
   }
