@@ -142,61 +142,13 @@ export function MessagesPage() {
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Sidebar */}
-        <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col min-h-0">
-          <div className="p-4 border-b flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar mensajes..."
-                className="pl-10 rounded-xl"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="p-2 pb-6">
-              {error && (
-                <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-700">{error}</span>
-                  </div>
-                </div>
-              )}
-              {filteredConversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => setSelectedConversation(conversation)}
-                  className={`w-full text-left p-4 rounded-xl mb-2 transition-all ${
-                    selectedConversation?.id === conversation.id
-                      ? 'bg-gradient-to-r from-pink-100/50 to-green-100/50 shadow-sm'
-                      : 'hover:bg-white/80'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{conversation.participantName}</span>
-                      {conversation.unread && (
-                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ec6c8c' }} />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">{conversation.time}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                    {conversation.lastMessage}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: platformColors[conversation.platform] }}>
-                    {platformIcons[conversation.platform]}
-                    <span className="capitalize">{conversation.platform}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ConversationList
+          onSelectConversation={setSelectedConversation}
+          selectedConversationId={selectedConversation?.id || null}
+          initialConversations={conversations}
+          error={error}
+          pollTrigger={pollTrigger}
+        />
 
         {/* Chat View */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
