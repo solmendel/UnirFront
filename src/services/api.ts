@@ -162,6 +162,21 @@ class ApiService {
     });
   }
 
+  async updateConversationCategory(
+    conversationId: number,
+    category: Conversation['category'],
+    updatedAt: string = new Date().toISOString(),
+  ): Promise<void> {
+    return this.request<void>('/api/v1/conversations/category', {
+      method: 'PUT',
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        category,
+        updated_at: updatedAt,
+      }),
+    });
+  }
+
   // Endpoints de canales
   async getChannels(): Promise<ChannelResponse[]> {
     return this.request<ChannelResponse[]>('/api/v1/channels');
@@ -257,7 +272,8 @@ class ApiService {
       unread: hasUnread,
       conversation: chatMessages,
       channelId: conversationResponse.channel_id,
-      externalId: conversationResponse.external_id
+      externalId: conversationResponse.external_id,
+      category: conversationResponse.category ?? 'sin_categoria'
     };
   }
 

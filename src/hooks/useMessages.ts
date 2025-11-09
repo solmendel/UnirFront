@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiService } from "../services/api";
 import { wsService } from "../services/websocket";
-import { logMessageSend } from "../services/historyService";
+import { logMessageSend, logAction } from "../services/historyService";
 import {
   Conversation,
   ChatMessage,
@@ -84,7 +84,29 @@ export function useMessages() {
   );
 
   const updateConversationCategory = useCallback(
-    (conversationId: string, category: ConversationCategory) => {
+    async (conversationId: string, category: ConversationCategory) => {
+      const numericId = Number(conversationId);
+
+      try {
+        if (!Number.isNaN(numericId)) {
+          await apiService.updateConversationCategory(numericId, category);
+
+          logAction({
+            user: '',
+            action: 'Cambio de etiqueta',
+            actionType: 'message',
+            details: `Cambió la etiqueta de la conversación ${conversationId} a "${category}"`,
+            endpoint: '/api/v1/conversations/category',
+            method: 'PUT',
+          }).catch((logErr) => {
+            console.warn('⚠️ Error logging category change:', logErr);
+          });
+        }
+      } catch (err) {
+        console.warn("⚠️ Error updating conversation category:", err);
+        setError("No se pudo actualizar la categoría en el servidor.");
+      }
+
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === conversationId ? { ...conv, category } : conv
