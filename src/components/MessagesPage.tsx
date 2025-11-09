@@ -38,7 +38,6 @@ export function MessagesPage() {
   const [reply, setReply] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState('');
   const [aiError, setAiError] = useState<string | null>(null);
   const [pollTrigger, setPollTrigger] = useState(0);
 
@@ -120,9 +119,9 @@ export function MessagesPage() {
   }, [selectedConversation, markMessageAsRead]);
 
   useEffect(() => {
-    setAiSuggestion('');
     setAiError(null);
     setIsAiLoading(false);
+    setReply('');
   }, [selectedConversation?.id]);
 
   const platformIcons = {
@@ -283,7 +282,8 @@ export function MessagesPage() {
                         setIsAiLoading(true);
                         try {
                           const result = await requestAiResponse(selectedConversation.id);
-                          setAiSuggestion(result?.suggestion || '');
+                          const suggestion = result?.suggestion || '';
+                          setReply(suggestion);
                         } catch (err) {
                           console.error('Error requesting AI response:', err);
                           setAiError('Error al generar respuesta');
@@ -319,16 +319,6 @@ export function MessagesPage() {
                   )}
                   {aiError && (
                     <p className="text-sm text-red-500 mt-2">{aiError}</p>
-                  )}
-                  {aiSuggestion && !isAiLoading && (
-                    <div className="mt-3">
-                      <Textarea
-                        value={aiSuggestion}
-                        onChange={(e) => setAiSuggestion(e.target.value)}
-                        className="rounded-xl resize-none text-base"
-                        rows={3}
-                      />
-                    </div>
                   )}
 
                   <div className="flex gap-2 items-end">
