@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Search, MessageSquare, UserPlus, Settings, Trash2, Zap, Link2, Loader2 } from 'lucide-react';
+import { API_CONFIG } from '../config/api';
 
 interface HistoryEntry {
   id: string;
@@ -16,8 +17,8 @@ interface HistoryEntry {
   details: string;
 }
 
-// URL del backend SQLite
-const HISTORY_API_URL = (import.meta as any).env.VITE_HISTORY_API_URL;
+// URL del backend Core
+const HISTORY_API_BASE = `${API_CONFIG.baseUrl}/api/v1/history`;
 
 // 🔹 Configuración visual
 const actionConfig = {
@@ -51,7 +52,7 @@ export function HistoryPage() {
           params.append('actionType', selectedFilters[0]);
         }
 
-        const url = `${HISTORY_API_URL}/api/history${params.toString() ? `?${params.toString()}` : ''}`;
+        const url = `${HISTORY_API_BASE}${params.toString() ? `?${params.toString()}` : ''}`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -69,7 +70,7 @@ export function HistoryPage() {
         setStats(statsData);
       } catch (err) {
         console.error('Error loading history:', err);
-        setError('No se pudo cargar el historial. Verifica que el backend esté corriendo y que VITE_HISTORY_API_URL esté configurado.');
+        setError('No se pudo cargar el historial. Verifica que el backend esté corriendo.');
         setHistory([]);
       } finally {
         setIsLoading(false);

@@ -7,6 +7,7 @@ import {
   ChatMessage,
   MessageResponse,
   ConversationResponse,
+  ConversationCategory,
 } from "../types/api";
 
 export function useMessages() {
@@ -80,6 +81,20 @@ export function useMessages() {
       }
     },
     [selectedConversation?.id]
+  );
+
+  const updateConversationCategory = useCallback(
+    (conversationId: string, category: ConversationCategory) => {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === conversationId ? { ...conv, category } : conv
+        )
+      );
+      setSelectedConversation((prev) =>
+        prev && prev.id === conversationId ? { ...prev, category } : prev
+      );
+    },
+    []
   );
 
   // Enviar mensaje
@@ -397,5 +412,6 @@ export function useMessages() {
     sendWhatsAppMessage,
     markMessageAsRead,
     isConnected: wsService.isConnected(),
+    updateConversationCategory,
   };
 }

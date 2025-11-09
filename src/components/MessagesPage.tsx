@@ -7,10 +7,18 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
-import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2, Tag } from 'lucide-react';
 import { useMessages } from '../hooks/useMessages';
 import { MessageList } from './MessageList';
 import { ConversationList } from './ConversationList';
+import type { ConversationCategory } from '../types/api';
+
+const CATEGORY_CONFIG: Record<ConversationCategory, { label: string; color: string; bgColor: string }> = {
+  consulta: { label: 'Consulta', color: '#3b82f6', bgColor: '#dbeafe' },
+  pedido: { label: 'Pedido', color: '#10b981', bgColor: '#d1fae5' },
+  reclamo: { label: 'Reclamo', color: '#ef4444', bgColor: '#fee2e2' },
+  sin_categoria: { label: 'Sin categoría', color: '#6b7280', bgColor: '#f3f4f6' }
+};
 
 export function MessagesPage() {
   const {
@@ -21,9 +29,11 @@ export function MessagesPage() {
     error,
     sendMessage,
     markMessageAsRead,
-    isConnected
+    isConnected,
+    updateConversationCategory
   } = useMessages();
 
+  const [categoryFilter, setCategoryFilter] = useState<'all' | ConversationCategory>('all');
   const [reply, setReply] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [pollTrigger, setPollTrigger] = useState(0);
@@ -88,6 +98,12 @@ export function MessagesPage() {
     setTemplates(templates.filter(t => t.id !== id));
   };
 
+  const handleCategoryChange = (category: ConversationCategory) => {
+    if (selectedConversation) {
+      updateConversationCategory(selectedConversation.id, category);
+    }
+  };
+
   useEffect(() => {
     if (selectedConversation && selectedConversation.conversation.length > 0) {
       const unreadMessages = selectedConversation.conversation.filter(
@@ -148,6 +164,9 @@ export function MessagesPage() {
           initialConversations={conversations}
           error={error}
           pollTrigger={pollTrigger}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          categoryConfig={CATEGORY_CONFIG}
         />
 
         {/* Chat View */}
@@ -155,12 +174,47 @@ export function MessagesPage() {
           {selectedConversation ? (
             <>
               <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
-                <h3>{selectedConversation.participantName}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
-                    {platformIcons[selectedConversation.platform]}
-                    <span className="ml-1 capitalize">{selectedConversation.platform}</span>
-                  </Badge>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <h3>{selectedConversation.participantName}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="rounded-full" style={{ borderColor: platformColors[selectedConversation.platform], color: platformColors[selectedConversation.platform] }}>
+                        {platformIcons[selectedConversation.platform]}
+                        <span className="ml-1 capitalize">{selectedConversation.platform}</span>
+                      </Badge>
+                      {selectedConversation.category && (
+                        <Badge
+                          variant="secondary"
+                          className="rounded-full border-none"
+                          style={{
+                            backgroundColor: CATEGORY_CONFIG[selectedConversation.category].bgColor,
+                            color: CATEGORY_CONFIG[selectedConversation.category].color
+                          }}
+                        >
+                          <Tag className="h-3 w-3 mr-1" />
+                          {CATEGORY_CONFIG[selectedConversation.category].label}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Select
+                    value={selectedConversation.category || 'sin_categoria'}
+                    onValueChange={(value) => handleCategoryChange(value as ConversationCategory)}
+                  >
+                    <SelectTrigger className="w-44 rounded-xl">
+                      <SelectValue placeholder="Seleccionar categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }} />
+                            {config.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

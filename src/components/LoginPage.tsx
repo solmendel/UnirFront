@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
 import { authService, LoginRequest } from '../services/authService';
+import { logLogin } from '../services/historyService';
 
 interface LoginPageProps {
   onLogin: (userData?: { email: string; name: string }) => void;
@@ -51,6 +52,9 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
       
       // Guardar sesión
       authService.saveSession(response);
+      logLogin(response.usuario.email, 'credentials').catch((err) =>
+        console.warn('Error al registrar inicio de sesión:', err)
+      );
       
       // Extraer nombre del email
       const name = formData.mail.split('@')[0] || 'Usuario';
@@ -80,6 +84,9 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
         mail: userData.email,
         password: ''
       });
+      logLogin(userData.name, 'google').catch((err) =>
+        console.warn('Error al registrar inicio de sesión con Google:', err)
+      );
       
       // Automatically log in with Google data
       onLogin(userData);

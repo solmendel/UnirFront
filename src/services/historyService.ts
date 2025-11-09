@@ -1,5 +1,7 @@
-// Servicio para notificar al backend SQLite sobre acciones realizadas
-const HISTORY_API_URL = (import.meta as any).env.VITE_HISTORY_API_URL;
+// Servicio para notificar al backend Core sobre acciones realizadas
+import { API_CONFIG } from '../config/api';
+
+const HISTORY_API_BASE = `${API_CONFIG.baseUrl}/api/v1/history`;
 
 interface HistoryEntry {
   user: string;
@@ -9,6 +11,8 @@ interface HistoryEntry {
   endpoint?: string;
   method?: string;
 }
+
+type LoginMethod = 'credentials' | 'google';
 
 /**
  * Obtener el nombre del usuario desde la sesión
@@ -34,7 +38,7 @@ export async function logAction(entry: HistoryEntry): Promise<void> {
     // Usar el nombre del usuario de la sesión si no se proporciona
     const user = entry.user || getUserName();
     
-    const response = await fetch(`${HISTORY_API_URL}/api/history/log`, {
+    const response = await fetch(`${HISTORY_API_BASE}/log`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +65,7 @@ export async function logAction(entry: HistoryEntry): Promise<void> {
 /**
  * Helper para registrar el envío de un mensaje
  */
-export async function logMessageSend(content: string, to?: string, platform?: string): Promise<void> {
+export async function logMessageSend(_content: string, to?: string, platform?: string): Promise<void> {
   await logAction({
     user: getUserName(),
     action: 'Envió mensaje',
@@ -82,6 +86,23 @@ export async function logAutoResponse(templateName: string): Promise<void> {
     actionType: 'auto-response',
     details: `Envió plantilla "${templateName}" a nuevo contacto`,
     endpoint: '/api/v1/messages',
+    method: 'POST',
+  });
+}
+
+export async function logLogin(userIdentifier: string, method: LoginMethod): Promise<void> {
+  const userName = userIdentifier || getUserName();
+  const details =
+    method === 'google'
+      ? 'Inicio de sesión con Google'
+      : 'Inicio de sesión con correo y contraseña';
+
+  await logAction({
+    user: userName,
+    action: 'Inicio de sesión',
+    actionType: 'connection',
+    details,
+    endpoint: method === 'google' ? '/auth/google' : '/api/auth/login',
     method: 'POST',
   });
 }

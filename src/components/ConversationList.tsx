@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { Search, Instagram, Mail, MessageCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Search, Instagram, Mail, MessageCircle, AlertCircle, Loader2, Tag } from 'lucide-react';
 import { apiService } from '../services/api';
-import { Conversation } from '../types/api';
+import { Conversation, ConversationCategory } from '../types/api';
 
 interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void;
@@ -11,6 +13,9 @@ interface ConversationListProps {
   initialConversations: Conversation[];
   error: string | null;
   pollTrigger: number;
+  categoryFilter: 'all' | ConversationCategory;
+  onCategoryFilterChange: (category: 'all' | ConversationCategory) => void;
+  categoryConfig: Record<ConversationCategory, { label: string; color: string; bgColor: string }>;
 }
 
 export function ConversationList({ 
@@ -18,7 +23,10 @@ export function ConversationList({
   selectedConversationId,
   initialConversations,
   error: parentError,
-  pollTrigger
+  pollTrigger,
+  categoryFilter,
+  onCategoryFilterChange,
+  categoryConfig
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,11 +94,16 @@ export function ConversationList({
         conv.lastMessage.toLowerCase().includes(query) ||
         conv.conversation.some(chat => chat.text.toLowerCase().includes(query))
       );
+    })
+    .filter(conv => {
+      if (categoryFilter === 'all') return true;
+      const category = conv.category ?? 'sin_categoria';
+      return category === categoryFilter;
     });
 
   return (
     <div className="w-96 border-r bg-white/50 backdrop-blur-sm flex flex-col">
-      <div className="p-4 border-b flex-shrink-0">
+      <div className="p-4 border-b flex-shrink-0 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -99,7 +112,29 @@ export function ConversationList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          {isRefreshing && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          )}
         </div>
+        <Select value={categoryFilter} onValueChange={(value) => onCategoryFilterChange(value as 'all' | ConversationCategory)}>
+          <SelectTrigger className="rounded-xl">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              <SelectValue placeholder="Filtrar por categoría" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las categorías</SelectItem>
+            {Object.entries(categoryConfig).map(([key, config]) => (
+              <SelectItem key={key} value={key}>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }} />
+                  {config.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <ScrollArea className="flex-1 overflow-hidden min-h-0 [&>div>div]:max-w-full [&>div>div]:w-full [&>div>div]:box-border">
@@ -134,9 +169,24 @@ export function ConversationList({
               <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
                 {conversation.lastMessage}
               </p>
-              <div className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: platformColors[conversation.platform] }}>
-                {platformIcons[conversation.platform]}
-                <span className="capitalize">{conversation.platform}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: platformColors[conversation.platform] }}>
+                  {platformIcons[conversation.platform]}
+                  <span className="capitalize">{conversation.platform}</span>
+                </div>
+                {(() => {
+                  const category = conversation.category ?? 'sin_categoria';
+                  const config = categoryConfig[category];
+                  return (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs rounded-full border-none"
+                      style={{ backgroundColor: config.bgColor, color: config.color }}
+                    >
+                      {config.label}
+                    </Badge>
+                  );
+                })()}
               </div>
             </button>
           ))}

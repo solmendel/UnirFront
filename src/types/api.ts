@@ -27,6 +27,8 @@ export interface MessageCreate {
   external_message_id?: string | null;
 }
 
+export type ConversationCategory = 'consulta' | 'pedido' | 'reclamo' | 'sin_categoria';
+
 export interface ConversationResponse {
   id: number;
   participant_name: string | null;
@@ -37,6 +39,7 @@ export interface ConversationResponse {
   created_at: string;
   updated_at: string;
   messages?: MessageResponse[]; // Optional - included when fetching a single conversation
+  category?: ConversationCategory | null;
 }
 
 export interface ConversationCreate {
@@ -111,6 +114,7 @@ export interface Conversation {
   conversation: ChatMessage[];
   channelId: number;
   externalId: string;
+  category: ConversationCategory;
 }
 
 export interface ApiConfig {
