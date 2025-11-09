@@ -13,13 +13,19 @@ interface MessageListProps {
 export function MessageList({ conversationId, participantName, platform, initialMessages, pollTrigger }: MessageListProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasAutoScrolled = useRef(false);
 
-  // Auto scroll to bottom when messages change
+  // Auto scroll to bottom only once per conversation
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    if (!hasAutoScrolled.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      hasAutoScrolled.current = true;
     }
   }, [messages]);
+
+  useEffect(() => {
+    hasAutoScrolled.current = false;
+  }, [conversationId]);
 
   // Poll for new messages when pollTrigger changes
   useEffect(() => {
