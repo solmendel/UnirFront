@@ -311,6 +311,22 @@ export function useMessages() {
     [selectedConversation]
   );
 
+  const requestAiResponse = useCallback(
+    async (conversationId: string) => {
+      const numericId = Number(conversationId);
+      if (Number.isNaN(numericId)) return null;
+
+      try {
+        return await apiService.requestAiResponse(numericId);
+      } catch (err) {
+        console.warn("⚠️ Error requesting AI response:", err);
+        setError("No se pudo solicitar respuesta con IA.");
+        throw err;
+      }
+    },
+    []
+  );
+
   // Configurar WebSocket (only on mount/unmount, not when state changes)
   useEffect(() => {
     const callbacks = {
@@ -435,5 +451,6 @@ export function useMessages() {
     markMessageAsRead,
     isConnected: wsService.isConnected(),
     updateConversationCategory,
+    requestAiResponse,
   };
 }

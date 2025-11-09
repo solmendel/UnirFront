@@ -177,6 +177,13 @@ class ApiService {
     });
   }
 
+  async requestAiResponse(conversationId: number): Promise<{ suggestion: string }> {
+    return this.request<{ suggestion: string }>('/api/v1/ia_service/suggest_reply', {
+      method: 'POST',
+      body: JSON.stringify({ conversation_id: conversationId }),
+    });
+  }
+
   // Endpoints de canales
   async getChannels(): Promise<ChannelResponse[]> {
     return this.request<ChannelResponse[]>('/api/v1/channels');

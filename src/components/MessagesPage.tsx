@@ -7,7 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
-import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2, Tag } from 'lucide-react';
+import { Instagram, Mail, MessageCircle, Send, Loader2, Plus, Trash2, Tag, Sparkles } from 'lucide-react';
 import { useMessages } from '../hooks/useMessages';
 import { MessageList } from './MessageList';
 import { ConversationList } from './ConversationList';
@@ -30,12 +30,16 @@ export function MessagesPage() {
     sendMessage,
     markMessageAsRead,
     isConnected,
-    updateConversationCategory
+    updateConversationCategory,
+    requestAiResponse,
   } = useMessages();
 
   const [categoryFilter, setCategoryFilter] = useState<'all' | ConversationCategory>('all');
   const [reply, setReply] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [aiError, setAiError] = useState<string | null>(null);
   const [pollTrigger, setPollTrigger] = useState(0);
 
   // Synchronized polling trigger - interval from .env (default 5000ms)
@@ -114,6 +118,12 @@ export function MessagesPage() {
       });
     }
   }, [selectedConversation, markMessageAsRead]);
+
+  useEffect(() => {
+    setAiSuggestion('');
+    setAiError(null);
+    setIsAiLoading(false);
+  }, [selectedConversation?.id]);
 
   const platformIcons = {
     instagram: <Instagram className="h-4 w-4" />,
@@ -266,7 +276,60 @@ export function MessagesPage() {
                     >
                       <Plus className="h-4 w-4" /> Nuevo
                     </Button>
+                    <Button
+                      onClick={async () => {
+                        if (!selectedConversation) return;
+                        setAiError(null);
+                        setIsAiLoading(true);
+                        try {
+                          const result = await requestAiResponse(selectedConversation.id);
+                          setAiSuggestion(result?.suggestion || '');
+                        } catch (err) {
+                          console.error('Error requesting AI response:', err);
+                          setAiError('Error al generar respuesta');
+                        } finally {
+                          setIsAiLoading(false);
+                        }
+                      }}
+                      variant="outline"
+                      className="rounded-xl flex items-center gap-2 transition-colors sm:ml-3"
+                      style={{ borderColor: '#ec6c8c', color: '#ec6c8c' }}
+                      onMouseEnter={(event) => {
+                        const target = event.currentTarget;
+                        target.style.backgroundColor = '#ec6c8c';
+                        target.style.color = '#ffffff';
+                      }}
+                      onMouseLeave={(event) => {
+                        const target = event.currentTarget;
+                        target.style.backgroundColor = '';
+                        target.style.color = '#ec6c8c';
+                      }}
+                    >
+                      {isAiLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                      Responder con IA
+                    </Button>
                   </div>
+
+                  {isAiLoading && (
+                    <p className="text-sm text-muted-foreground mt-2">Generando...</p>
+                  )}
+                  {aiError && (
+                    <p className="text-sm text-red-500 mt-2">{aiError}</p>
+                  )}
+                  {aiSuggestion && !isAiLoading && (
+                    <div className="mt-3">
+                      <Textarea
+                        value={aiSuggestion}
+                        onChange={(e) => setAiSuggestion(e.target.value)}
+                        className="rounded-xl resize-none text-base"
+                        rows={3}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex gap-2 items-end">
                     <Textarea
