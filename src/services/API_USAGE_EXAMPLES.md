@@ -8,8 +8,8 @@ The API service is configured in `src/config/api.ts`. You can customize the base
 
 ```bash
 # Create a .env file in the root directory
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
+VITE_API_URL=http://localhost:8003
+VITE_WS_URL=ws://localhost:8003
 ```
 
 ## Import the API Service

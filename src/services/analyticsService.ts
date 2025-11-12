@@ -1,12 +1,13 @@
 import { DashboardMetrics } from '../types/api';
+import { API_CONFIG } from '../config/api';
 
 class AnalyticsService {
   private baseUrl: string;
 
   constructor() {
-    // Conecta al Core API que corre en el puerto 8003 por defecto
-    // Se puede configurar con variable de entorno VITE_ANALYTICS_API_URL
-    this.baseUrl = import.meta.env.VITE_ANALYTICS_API_URL || 'http://localhost:8003';
+    // Usa la URL del backend de analytics definida en la configuración
+    // Se puede sobrescribir con la variable de entorno VITE_ANALYTICS_API_URL
+    this.baseUrl = (import.meta.env.VITE_ANALYTICS_API_URL as string) || API_CONFIG.analyticsUrl;
   }
 
   private async request<T>(
@@ -19,10 +20,25 @@ class AnalyticsService {
       'Content-Type': 'application/json',
     };
 
+    // Intentar adjuntar el token de sesión, si existe
+    let authHeaders = {};
+    try {
+      const sessionRaw = localStorage.getItem('unir-session');
+      if (sessionRaw) {
+        const session = JSON.parse(sessionRaw);
+        if (session?.token) {
+          authHeaders = { Authorization: `Bearer ${session.token}` };
+        }
+      }
+    } catch (err) {
+      console.warn('No se pudo leer la sesión almacenada:', err);
+    }
+
     const response = await fetch(url, {
       ...options,
       headers: {
         ...defaultHeaders,
+        ...authHeaders,
         ...options.headers,
       },
     });

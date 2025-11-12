@@ -65,19 +65,21 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
     setIsLoading(true);
 
     try {
-      const response = await authService.register(formData);
-      
-      setSuccess('¡Usuario registrado exitosamente! Redirigiendo...');
-      
-      // Simular un pequeño delay para mostrar el mensaje de éxito
-      setTimeout(() => {
-        const userData = {
-          email: response.email,
-          name: response.email.split('@')[0] || 'Usuario'
-        };
-        onRegister(userData);
-      }, 1500);
+      await authService.register(formData);
 
+      const session = await authService.login({
+        mail: formData.mail,
+        password: formData.password,
+      });
+
+      setSuccess('¡Usuario registrado exitosamente! Redirigiendo...');
+
+      setTimeout(() => {
+        onRegister({
+          email: session.user.email,
+          name: session.user.name,
+        });
+      }, 800);
     } catch (error: any) {
       console.error('Error en registro:', error);
       setError(error.message || 'Error al registrar usuario. Inténtalo de nuevo.');

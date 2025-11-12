@@ -30,7 +30,10 @@ export default function App() {
         const session = authService.getCurrentSession();
         if (session) {
           setIsLoggedIn(true);
-          setUserData(session.user);
+          setUserData({
+            email: session.user.email,
+            name: session.user.name,
+          });
         }
       } catch (error) {
         console.error('Error checking session:', error);

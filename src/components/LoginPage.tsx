@@ -48,18 +48,13 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      const response = await authService.login(formData);
-      
-      // Guardar sesión
-      authService.saveSession(response);
-      logLogin(response.usuario.email, 'credentials').catch((err) =>
+      const session = await authService.login(formData);
+
+      logLogin(session.user.email, 'credentials').catch((err) =>
         console.warn('Error al registrar inicio de sesión:', err)
       );
-      
-      // Extraer nombre del email
-      const name = formData.mail.split('@')[0] || 'Usuario';
-      onLogin({ email: formData.mail, name });
 
+      onLogin({ email: session.user.email, name: session.user.name });
     } catch (error: any) {
       console.error('Error en login:', error);
       setError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');

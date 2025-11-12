@@ -262,7 +262,7 @@ export function MetricsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Asegúrate de que el backend de analytics esté corriendo en http://127.0.0.1:8000
+              Asegúrate de que el backend de analytics esté corriendo en http://127.0.0.1:8003
             </p>
           </CardContent>
         </Card>

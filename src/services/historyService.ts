@@ -102,7 +102,7 @@ export async function logLogin(userIdentifier: string, method: LoginMethod): Pro
     action: 'Inicio de sesión',
     actionType: 'connection',
     details,
-    endpoint: method === 'google' ? '/auth/google' : '/api/auth/login',
+    endpoint: method === 'google' ? '/auth/google' : '/api/v1/auth/login',
     method: 'POST',
   });
 }

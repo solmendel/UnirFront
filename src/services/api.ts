@@ -12,6 +12,27 @@ import {
 } from '../types/api';
 import { API_CONFIG } from '../config/api';
 
+const getAuthHeaders = (): Record<string, string> => {
+  try {
+    const sessionRaw = localStorage.getItem('unir-session');
+    if (sessionRaw) {
+      const session = JSON.parse(sessionRaw);
+      if (session?.token) {
+        return { Authorization: `Bearer ${session.token}` };
+      }
+    }
+  } catch (error) {
+    console.warn('No se pudo obtener la sesión para autenticar la petición:', error);
+  }
+  return {};
+};
+
+type ConversationWithMessages = ConversationResponse & {
+  messages?: MessageResponse[];
+  last_message?: MessageResponse | null;
+  has_unread?: boolean;
+};
+
 class ApiService {
   private baseUrl: string;
 
@@ -33,6 +54,7 @@ class ApiService {
       ...options,
       headers: {
         ...defaultHeaders,
+        ...getAuthHeaders(),
         ...options.headers,
       },
     });
@@ -223,14 +245,14 @@ class ApiService {
   }
 
   // Métodos de utilidad para convertir datos
-  convertToConversation(conversationResponse: any): Conversation {
+  convertToConversation(conversationResponse: ConversationWithMessages): Conversation {
     const platform = this.getPlatformFromChannelId(conversationResponse.channel_id);
 
     // Manejo de mensajes
-    const messages = conversationResponse.messages || [];
+    const messages: MessageResponse[] = conversationResponse.messages ?? [];
     // Sort messages by ID to ensure chronological order
     const sortedMessages = [...messages].sort((a, b) => a.id - b.id);
-    const chatMessages: ChatMessage[] = sortedMessages.map(msg => ({
+    const chatMessages: ChatMessage[] = sortedMessages.map((msg: MessageResponse) => ({
       id: msg.id.toString(),
       text: msg.content,
       sender: msg.direction === 'incoming' ? 'user' : 'me',
@@ -253,14 +275,14 @@ class ApiService {
     }
 
     const hasUnread = conversationResponse.has_unread ||
-      messages.some(msg => !msg.is_read && msg.direction === 'incoming');
+      messages.some((msg: MessageResponse) => !msg.is_read && msg.direction === 'incoming');
 
     // Intentar obtener el nombre del participante de diferentes fuentes
     let participantName = conversationResponse.participant_name;
     
     // Si no hay nombre, intentar obtenerlo del sender_name del primer mensaje entrante
     if (!participantName || participantName === 'Usuario') {
-      const firstIncomingMsg = messages.find(msg => msg.direction === 'incoming' && msg.sender_name);
+      const firstIncomingMsg = messages.find((msg: MessageResponse) => msg.direction === 'incoming' && msg.sender_name);
       if (firstIncomingMsg && firstIncomingMsg.sender_name) {
         participantName = firstIncomingMsg.sender_name;
       } else {

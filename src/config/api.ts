@@ -4,9 +4,9 @@ export const API_CONFIG = {
   // Vite usa VITE_ prefix for environment variables
   // Default: Both Mock and Core API run on port 8003
   baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8003',
-  wsUrl: import.meta.env.VITE_WS_URL || 'ws://localhost:8003',
+  wsUrl: import.meta.env.VITE_WS_URL || 'ws://localhost:8003/ws',
   // URL del backend de analytics (FastAPI)
-  analyticsUrl: import.meta.env.VITE_ANALYTICS_API_URL || 'http://127.0.0.1:8000',
+  analyticsUrl: import.meta.env.VITE_ANALYTICS_API_URL || 'http://127.0.0.1:8003',
   
   // Configuración de canales (ajustar según tu backend)
   channels: {
