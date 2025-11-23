@@ -63,8 +63,11 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
     }
   };
 
-  const handleGoogleSuccess = (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
+      setIsLoading(true);
+      setError('');
+      
       // Decode the JWT token to get user information
       const decoded: any = jwtDecode(credentialResponse.credential);
       
@@ -79,14 +82,26 @@ export function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
         mail: userData.email,
         password: ''
       });
-      logLogin(userData.name, 'google').catch((err) =>
-        console.warn('Error al registrar inicio de sesión con Google:', err)
-      );
       
-      // Automatically log in with Google data
-      onLogin(userData);
+      // Create session with Google token
+      try {
+        const session = await authService.loginWithGoogle(credentialResponse.credential, userData);
+        
+        logLogin(userData.email, 'google').catch((err) =>
+          console.warn('Error al registrar inicio de sesión con Google:', err)
+        );
+        
+        // Automatically log in with Google data
+        onLogin({ email: session.user.email, name: session.user.name });
+      } catch (error: any) {
+        console.error('Error creating Google session:', error);
+        setError('Error al iniciar sesión con Google');
+      }
     } catch (error) {
       console.error('Error decoding Google credential:', error);
+      setError('Error al procesar la autenticación de Google');
+    } finally {
+      setIsLoading(false);
     }
   };
 

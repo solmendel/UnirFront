@@ -170,14 +170,37 @@ class AuthService {
     localStorage.setItem('unir-session', JSON.stringify(session));
   }
 
-  getCurrentSession(): AuthSession | null {
+  async getCurrentSession(): Promise<AuthSession | null> {
     try {
       const sessionData = localStorage.getItem('unir-session');
       if (sessionData) {
         const session: AuthSession = JSON.parse(sessionData);
-        if (session.expiresAt && new Date().getTime() < session.expiresAt) {
-          return session;
+        
+        // Check if session hasn't expired locally
+        if (session.expiresAt && new Date().getTime() >= session.expiresAt) {
+          localStorage.removeItem('unir-session');
+          return null;
         }
+
+        // If it's a Google login token (starts with "google_"), skip backend verification
+        // Google sessions are local-only but persist across browser restarts
+        if (session.token && session.token.startsWith('google_')) {
+          return session; // Return Google session without backend verification
+        }
+
+        // Verify token is still valid on the server (for normal login sessions)
+        if (session.token) {
+          const isValid = await this.verifyToken(session.token);
+          if (isValid) {
+            return session;
+          } else {
+            // Token is invalid, remove session
+            localStorage.removeItem('unir-session');
+            return null;
+          }
+        }
+        
+        // No token in session, remove it
         localStorage.removeItem('unir-session');
       }
       return null;
@@ -185,6 +208,45 @@ class AuthService {
       console.error('Error obteniendo sesión:', error);
       localStorage.removeItem('unir-session');
       return null;
+    }
+  }
+
+  async loginWithGoogle(googleToken: string, userData: { email: string; name: string }): Promise<AuthSession> {
+    try {
+      const username = userData.email.split('@')[0]?.replace(/[^a-zA-Z0-9_.-]/g, '') || userData.email;
+      const now = new Date().getTime();
+      
+      // Create a persistent session for Google login
+      // The token starts with "google_" so we know it's a Google session
+      const sessionId = `google_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      const session: AuthSession = {
+        token: sessionId,
+        tokenType: 'Bearer',
+        user: {
+          id: 0,
+          email: userData.email,
+          username: username,
+          role: 'colaborador',
+          name: userData.name,
+        },
+        loginTime: now,
+        expiresAt: now + 24 * 60 * 60 * 1000, // 24 hours - persist for 24 hours
+      };
+      
+      // Save session to localStorage so it persists across browser restarts
+      this.saveSession(session);
+      
+      // Verify it was saved correctly by reading directly from localStorage
+      const savedData = localStorage.getItem('unir-session');
+      if (!savedData) {
+        throw new Error('Error al guardar la sesión en localStorage');
+      }
+      
+      return session;
+    } catch (error) {
+      console.error('Error en login con Google:', error);
+      throw error;
     }
   }
 

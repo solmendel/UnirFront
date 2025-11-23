@@ -25,9 +25,9 @@ export default function App() {
 
   // Check for existing session on app load
   useEffect(() => {
-    const checkSession = () => {
+    const checkSession = async () => {
       try {
-        const session = authService.getCurrentSession();
+        const session = await authService.getCurrentSession();
         if (session) {
           setIsLoggedIn(true);
           setUserData({
