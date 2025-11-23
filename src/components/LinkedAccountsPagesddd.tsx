@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -16,9 +16,6 @@ interface LinkedAccount {
   connectedDate?: string;
   messagesCount?: number;
 }
-
-// URL del endpoint de producción para OAuth de Gmail
-const GMAIL_OAUTH_URL = 'https://kimora-unmalicious-brady.ngrok-free.dev/auth/gmail/start';
 
 export function LinkedAccountsPage() {
   const [accounts, setAccounts] = useState<LinkedAccount[]>([
@@ -55,78 +52,7 @@ export function LinkedAccountsPage() {
     },
   ]);
 
-  // Manejar callback OAuth de Gmail y verificar estado de conexión
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const gmailConnected = urlParams.get('gmail_connected');
-    const email = urlParams.get('email');
-    const error = urlParams.get('error');
-    
-    // Si hay un parámetro gmail_connected=true, significa que la conexión fue exitosa
-    if (gmailConnected === 'true') {
-      setAccounts(prevAccounts =>
-        prevAccounts.map(account =>
-          account.platform === 'gmail'
-            ? {
-                ...account,
-                connected: true,
-                accountName: email || 'Cuenta conectada',
-                connectedDate: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-              }
-            : account
-        )
-      );
-      
-      // Limpiar parámetros de la URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    
-    // Si hay un error en el callback
-    if (gmailConnected === 'false' || error) {
-      console.error('Error en conexión Gmail:', error);
-      // Limpiar parámetros de la URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Aquí podrías mostrar un mensaje de error al usuario si lo deseas
-    }
-    
-    // Si hay un código pero no el parámetro gmail_connected, 
-    // significa que el usuario volvió del OAuth pero el backend no redirigió correctamente
-    // En este caso, asumimos que la conexión fue exitosa después de un breve delay
-    // (esto es un fallback - idealmente el backend debería redirigir con gmail_connected=true)
-    if (code && !gmailConnected) {
-      // Esperar un momento y luego actualizar el estado
-      const timer = setTimeout(() => {
-        setAccounts(prevAccounts =>
-          prevAccounts.map(account =>
-            account.platform === 'gmail' && !account.connected
-              ? {
-                  ...account,
-                  connected: true,
-                  accountName: 'Cuenta conectada',
-                  connectedDate: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-                }
-              : account
-          )
-        );
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   const handleToggleConnection = (accountId: string) => {
-    const account = accounts.find(acc => acc.id === accountId);
-    
-    // Si es Gmail y está desconectado, redirigir a OAuth
-    if (account?.platform === 'gmail' && !account.connected) {
-      // Redirigir a la URL de OAuth de producción
-      window.location.href = GMAIL_OAUTH_URL;
-      return;
-    }
-    
-    // Para otras plataformas o desconexión, usar el comportamiento normal
     setAccounts(prevAccounts =>
       prevAccounts.map(account =>
         account.id === accountId
@@ -297,7 +223,13 @@ export function LinkedAccountsPage() {
                     className="w-full rounded-xl text-sm py-2"
                     variant={account.connected ? 'outline' : 'default'}
                     style={!account.connected ? { backgroundColor: account.color } : { borderColor: account.color, color: account.color }}
-                    onClick={() => handleToggleConnection(account.id)}
+                    onClick={() => {
+                      if (account.platform === 'gmail' && !account.connected) {
+                        window.open('http://localhost:8001/auth/gmail/start', '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+                      handleToggleConnection(account.id);
+                    }}
                   >
                     {account.connected ? 'Desconectar' : 'Conectar'}
                   </Button>
