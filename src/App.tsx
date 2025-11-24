@@ -88,9 +88,9 @@ export default function App() {
   // 🧭 2️⃣ Agregamos la opción "Cuentas Vinculadas" al menú lateral
   const navigation = [
     { id: 'messages' as Page, label: 'Mensajes', icon: MessageSquare, color: '#ec6c8c' },
-    { id: 'linkedAccounts' as Page, label: 'Cuentas vinculadas', icon: Link2, color: '#acce60' },
     { id: 'metrics' as Page, label: 'Métricas', icon: BarChart3, color: '#8b5cf6' },
     { id: 'history' as Page, label: 'Historial', icon: History, color: '#6366f1' },
+    { id: 'linkedAccounts' as Page, label: 'Cuentas vinculadas', icon: Link2, color: '#acce60' },
     { id: 'collaborators' as Page, label: 'Colaboradores', icon: Users, color: '#f59e0b' },
   ];
 

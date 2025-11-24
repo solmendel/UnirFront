@@ -75,7 +75,7 @@ export function LinkedAccountsPage() {
       {/* Fixed header */}
       <div className="fixed top-0 left-0 right-0 w-full z-50 border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 py-4">
         <div>
-          <h2>Cuentas Vinculadas</h2>
+          <h2>Cuentas Vinculadas [WIP]</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Conecta y administra tus plataformas de mensajería
           </p>

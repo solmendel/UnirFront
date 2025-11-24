@@ -90,7 +90,7 @@ export function CollaboratorsPage() {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-pink-50/30 to-green-50/30">
       <div className="border-b bg-white/80 backdrop-blur-sm px-6 py-4 flex-shrink-0">
-        <h2>Colaboradores</h2>
+        <h2>Colaboradores [WIP]</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Gestiona tu equipo y sus permisos
         </p>
