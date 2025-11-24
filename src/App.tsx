@@ -6,7 +6,7 @@ import { HistoryPage } from './components/HistoryPage';
 import { CollaboratorsPage } from './components/CollaboratorsPage';
 import { MetricsPage } from './components/MetricsPage';
 import { LinkedAccountsPage } from './components/LinkedAccountsPage';
-import { MessageSquare, History, Users, BarChart3, LogOut, Link2 } from 'lucide-react';
+import { MessageSquare, History, Users, BarChart3, LogOut, Link2, MessageSquarePlus } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
 import logo from 'figma:asset/ddbe47dfc68e74892d453d3ae9be3150750b8c47.png';
@@ -160,6 +160,18 @@ export default function App() {
         </nav>
 
         <Separator />
+
+        {/* Feedback button */}
+        <div className="p-4">
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-3 px-4 rounded-xl hover:bg-pink-50 border-pink-200"
+            onClick={() => window.open('https://docs.google.com/forms/u/0/d/1fKnE49rzggN4hTQVSfWmTA2kqvJkkyY88v4kL-cqcnI/viewform?pli=1&usp=drivesdk&pli=1&authuser=0&edit_requested=true', '_blank')}
+          >
+            <MessageSquarePlus className="h-4 w-4" style={{ color: '#ec6c8c' }} />
+            <span style={{ color: '#ec6c8c' }}>Danos tu opinión</span>
+          </Button>
+        </div>
 
         {/* User section */}
         <div className="p-4 border-t bg-white/30">
