@@ -158,9 +158,6 @@ export function MessagesPage() {
             </p>
             <div className="flex items-center gap-2 mt-2">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-orange-500'}`} />
-              <span className="text-xs text-muted-foreground">
-                {isConnected ? 'Conectado al backend' : 'Modo demo - Backend no configurado'}
-              </span>
             </div>
           </div>
         </div>
