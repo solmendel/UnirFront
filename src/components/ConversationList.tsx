@@ -137,8 +137,8 @@ export function ConversationList({
         </Select>
       </div>
 
-      <ScrollArea className="flex-1 overflow-hidden min-h-0 [&>div>div]:max-w-full [&>div>div]:w-full [&>div>div]:box-border">
-        <div className="p-3 pb-6 box-border" style={{ width: '100%', maxWidth: '100%', minWidth: 0, display: 'block' }}>
+      <ScrollArea className="flex-1 overflow-hidden min-h-0">
+        <div className="p-3 pb-6 box-border" style={{ width: '100%', maxWidth: '100%', minWidth: 0, display: 'block', overflow: 'hidden' }}>
           {error && (
             <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-center gap-2">
