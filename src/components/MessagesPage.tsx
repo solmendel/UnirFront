@@ -20,6 +20,15 @@ const CATEGORY_CONFIG: Record<ConversationCategory, { label: string; color: stri
   sin_categoria: { label: 'Sin categoría', color: '#6b7280', bgColor: '#f3f4f6' }
 };
 
+const TEMPLATES_STORAGE_KEY = 'unir-templates';
+
+const DEFAULT_TEMPLATES = [
+  { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
+  { id: '2', name: 'Consulta de producto', content: 'Gracias por tu interés en nuestros productos. Te proporcionaré toda la información que necesites.' },
+  { id: '3', name: 'Estado de pedido', content: 'Voy a revisar el estado de tu pedido y te informo en breve.' },
+  { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
+];
+
 export function MessagesPage() {
   const {
     conversations,
@@ -54,18 +63,37 @@ export function MessagesPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 👉 Estado de plantillas
-  const [templates, setTemplates] = useState([
-    { id: '1', name: 'Saludo inicial', content: 'Hola, gracias por contactarnos. ¿En qué podemos ayudarte?' },
-    { id: '2', name: 'Consulta de producto', content: 'Gracias por tu interés en nuestros productos. Te proporcionaré toda la información que necesites.' },
-    { id: '3', name: 'Estado de pedido', content: 'Voy a revisar el estado de tu pedido y te informo en breve.' },
-    { id: '4', name: 'Despedida', content: 'Gracias por contactarnos. ¡Que tengas un excelente día!' },
-  ]);
+  // 👉 Estado de plantillas (cargadas desde localStorage)
+  const [templates, setTemplates] = useState(() => {
+    try {
+      const stored = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validar que sea un array
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.warn('Error cargando plantillas desde localStorage:', error);
+    }
+    // Si no hay plantillas guardadas o hay error, usar defaults
+    return DEFAULT_TEMPLATES;
+  });
 
   // 👉 Modal para nueva plantilla
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateContent, setNewTemplateContent] = useState('');
+
+  // 👉 Guardar plantillas en localStorage cuando cambien
+  useEffect(() => {
+    try {
+      localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
+    } catch (error) {
+      console.error('Error guardando plantillas en localStorage:', error);
+    }
+  }, [templates]);
 
   const handleTemplateSelect = (templateContent: string) => {
     setReply(templateContent);
